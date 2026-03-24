@@ -6,13 +6,17 @@ import {
   onAuthStateChanged,
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
 import {
   getFirestore,
   collection,
   addDoc,
   getDocs,
   deleteDoc,
-  doc
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -40,5 +44,8 @@ export {
   addDoc,
   getDocs,
   deleteDoc,
-  doc
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc
 };
