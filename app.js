@@ -4,9 +4,12 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     onAuthStateChanged,
+    signOut,
     collection,
     addDoc,
-    getDocs
+    getDocs,
+    deleteDoc,
+    doc
 } from "./firebase.js";
 
 let expenses = [];
@@ -20,8 +23,19 @@ const categoryColors = {
     "Vivienda": "#f1c40f"
 };
 
+const form = document.getElementById("expenseForm");
+const searchInput = document.getElementById("searchInput");
+const registerBtn = document.getElementById("registerBtn");
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
+const authSection = document.getElementById("authSection");
+const userInfo = document.getElementById("userInfo");
+
+const categoryChartCtx = document.getElementById("categoryChart").getContext("2d");
+const balanceChartCtx = document.getElementById("balanceChart").getContext("2d");
+
 // =======================
-// NAVEGACIÓN DE PESTAÑAS
+// NAVEGACIÓN DE TABS
 // =======================
 document.querySelectorAll("nav li").forEach(tab => {
     tab.addEventListener("click", () => {
@@ -38,11 +52,80 @@ document.querySelectorAll("nav li").forEach(tab => {
 });
 
 // =======================
-// LOGIN / REGISTRO
+// GRÁFICOS
 // =======================
-const registerBtn = document.getElementById("registerBtn");
-const loginBtn = document.getElementById("loginBtn");
+let categoryChart = new Chart(categoryChartCtx, {
+    type: "doughnut",
+    data: {
+        labels: [],
+        datasets: [{
+            data: [],
+            backgroundColor: []
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: "bottom",
+                labels: {
+                    color: "#fff"
+                }
+            }
+        }
+    }
+});
 
+let balanceChart = new Chart(balanceChartCtx, {
+    type: "line",
+    data: {
+        labels: [],
+        datasets: [{
+            label: "Saldo acumulado",
+            data: [],
+            borderColor: "#00e5a8",
+            backgroundColor: "rgba(0, 229, 168, 0.12)",
+            fill: true,
+            tension: 0.3,
+            pointRadius: 4,
+            pointBackgroundColor: "#00e5a8"
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: {
+                    color: "#fff"
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: {
+                    color: "#fff"
+                },
+                grid: {
+                    color: "rgba(255,255,255,0.08)"
+                }
+            },
+            y: {
+                ticks: {
+                    color: "#fff"
+                },
+                grid: {
+                    color: "rgba(255,255,255,0.08)"
+                }
+            }
+        }
+    }
+});
+
+// =======================
+// REGISTRO
+// =======================
 registerBtn.addEventListener("click", async () => {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
@@ -58,15 +141,17 @@ registerBtn.addEventListener("click", async () => {
     }
 
     try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        console.log("Usuario registrado:", userCredential.user);
+        await createUserWithEmailAndPassword(auth, email, password);
         alert("Cuenta creada correctamente");
     } catch (error) {
-        console.error("Error al registrarse:", error);
-        alert("Error: " + error.code + " | " + error.message);
+        console.error(error);
+        alert("Error al registrarte: " + error.message);
     }
 });
 
+// =======================
+// LOGIN
+// =======================
 loginBtn.addEventListener("click", async () => {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
@@ -77,74 +162,30 @@ loginBtn.addEventListener("click", async () => {
     }
 
     try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log("Sesión iniciada:", userCredential.user);
-        alert("Bienvenido");
+        await signInWithEmailAndPassword(auth, email, password);
+        alert("Sesión iniciada correctamente");
     } catch (error) {
-        console.error("Error al iniciar sesión:", error);
-        alert("Error: " + error.code + " | " + error.message);
+        console.error(error);
+        alert("Error al iniciar sesión: " + error.message);
     }
 });
 
 // =======================
-// GRÁFICOS
+// LOGOUT
 // =======================
-const categoryChartCtx = document.getElementById("categoryChart").getContext("2d");
-const balanceChartCtx = document.getElementById("balanceChart").getContext("2d");
-
-let categoryChart = new Chart(categoryChartCtx, {
-    type: "doughnut",
-    data: {
-        labels: [],
-        datasets: [{
-            data: [],
-            backgroundColor: []
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: {
-                position: "bottom",
-                labels: { color: "#fff" }
-            }
-        }
-    }
-});
-
-let balanceChart = new Chart(balanceChartCtx, {
-    type: "line",
-    data: {
-        labels: [],
-        datasets: [{
-            label: "Saldo",
-            data: [],
-            borderColor: "#00e5a8",
-            backgroundColor: "rgba(0,229,168,0.12)",
-            fill: true,
-            tension: 0.3,
-            pointRadius: 4
-        }]
-    },
-    options: {
-        responsive: true,
-        scales: {
-            x: { ticks: { color: "#fff" } },
-            y: { ticks: { color: "#fff" } }
-        },
-        plugins: {
-            legend: {
-                labels: { color: "#fff" }
-            }
-        }
+logoutBtn.addEventListener("click", async () => {
+    try {
+        await signOut(auth);
+        alert("Sesión cerrada");
+    } catch (error) {
+        console.error(error);
+        alert("No se pudo cerrar sesión");
     }
 });
 
 // =======================
-// FORMULARIO
+// GUARDAR MOVIMIENTO
 // =======================
-const form = document.getElementById("expenseForm");
-
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -155,25 +196,40 @@ form.addEventListener("submit", async (e) => {
         return;
     }
 
+    const date = document.getElementById("date").value;
+    const category = document.getElementById("category").value;
+    const description = document.getElementById("description").value.trim();
+    const amount = parseFloat(document.getElementById("amount").value);
+    const payment = document.getElementById("payment").value;
+    const type = document.getElementById("type").value;
+    const notes = document.getElementById("notes").value.trim();
+
+    if (!date || !category || !description || isNaN(amount) || amount <= 0) {
+        alert("Completa correctamente los campos");
+        return;
+    }
+
     const data = {
         uid: user.uid,
-        date: document.getElementById("date").value,
-        category: document.getElementById("category").value,
-        description: document.getElementById("description").value,
-        amount: parseFloat(document.getElementById("amount").value),
-        payment: document.getElementById("payment").value,
-        type: document.getElementById("type").value,
-        notes: document.getElementById("notes").value
+        date,
+        category,
+        description,
+        amount,
+        payment,
+        type,
+        notes,
+        createdAt: Date.now()
     };
 
     try {
         await addDoc(collection(db, "movimientos"), data);
-        alert("Movimiento guardado");
+        alert("Movimiento guardado correctamente");
         form.reset();
         await loadData();
+        activateTab("history");
     } catch (error) {
-        console.error("Error al guardar movimiento:", error);
-        alert("Error: " + error.code + " | " + error.message);
+        console.error(error);
+        alert("Error al guardar el movimiento");
     }
 });
 
@@ -188,17 +244,47 @@ async function loadData() {
         const querySnapshot = await getDocs(collection(db, "movimientos"));
         expenses = [];
 
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
+        querySnapshot.forEach((item) => {
+            const data = item.data();
+
             if (data.uid === user.uid) {
-                expenses.push(data);
+                expenses.push({
+                    id: item.id,
+                    ...data
+                });
             }
+        });
+
+        expenses.sort((a, b) => {
+            const dateA = new Date(a.date).getTime();
+            const dateB = new Date(b.date).getTime();
+
+            if (dateA !== dateB) return dateA - dateB;
+            return (a.createdAt || 0) - (b.createdAt || 0);
         });
 
         update();
     } catch (error) {
-        console.error("Error al cargar datos:", error);
-        alert("Error al cargar datos: " + error.message);
+        console.error(error);
+        alert("Error al cargar los datos");
+    }
+}
+
+// =======================
+// ELIMINAR MOVIMIENTO
+// =======================
+async function deleteExpense(id) {
+    const confirmDelete = confirm("¿Seguro que quieres eliminar este movimiento?");
+    if (!confirmDelete) return;
+
+    try {
+        await deleteDoc(doc(db, "movimientos", id));
+        expenses = expenses.filter(expense => expense.id !== id);
+        update();
+        alert("Movimiento eliminado");
+    } catch (error) {
+        console.error(error);
+        alert("No se pudo eliminar el movimiento");
     }
 }
 
@@ -214,14 +300,12 @@ function update() {
     const tableBody = document.querySelector("#expenseTable tbody");
     tableBody.innerHTML = "";
 
-    expenses.sort((a, b) => new Date(a.date) - new Date(b.date));
-
-    expenses.forEach(e => {
-        if (e.type === "Gasto") totalExpenses += Number(e.amount);
-        else totalIncome += Number(e.amount);
-
+    expenses.forEach((e) => {
         if (e.type === "Gasto") {
+            totalExpenses += Number(e.amount);
             categoryTotals[e.category] = (categoryTotals[e.category] || 0) + Number(e.amount);
+        } else {
+            totalIncome += Number(e.amount);
         }
 
         balanceTimeline.push({
@@ -229,66 +313,89 @@ function update() {
             balance: totalIncome - totalExpenses
         });
 
-        tableBody.innerHTML += `
-            <tr>
-                <td>${e.date}</td>
-                <td style="color:${categoryColors[e.category] || "#fff"}; font-weight:bold;">${e.category}</td>
-                <td>${e.description}</td>
-                <td>S/ ${Number(e.amount).toFixed(2)}</td>
-                <td>${e.payment}</td>
-                <td>${e.type}</td>
-                <td>${e.notes || ""}</td>
-            </tr>
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${e.date}</td>
+            <td style="color:${categoryColors[e.category] || "#fff"}; font-weight:bold;">${e.category}</td>
+            <td>${e.description}</td>
+            <td>S/ ${Number(e.amount).toFixed(2)}</td>
+            <td>${e.payment}</td>
+            <td>${e.type}</td>
+            <td>${e.notes || ""}</td>
+            <td>
+                <button class="delete-btn" data-id="${e.id}">
+                    <i class="fas fa-trash"></i> Borrar
+                </button>
+            </td>
         `;
+        tableBody.appendChild(row);
     });
 
     document.getElementById("balance").textContent = `S/ ${(totalIncome - totalExpenses).toFixed(2)}`;
     document.getElementById("totalExpenses").textContent = `S/ ${totalExpenses.toFixed(2)}`;
     document.getElementById("totalIncome").textContent = `S/ ${totalIncome.toFixed(2)}`;
 
-    categoryChart.data.labels = Object.keys(categoryTotals);
+    const labels = Object.keys(categoryTotals);
+    categoryChart.data.labels = labels;
     categoryChart.data.datasets[0].data = Object.values(categoryTotals);
-    categoryChart.data.datasets[0].backgroundColor = Object.keys(categoryTotals).map(c => categoryColors[c] || "#ccc");
+    categoryChart.data.datasets[0].backgroundColor = labels.map(label => categoryColors[label] || "#ccc");
     categoryChart.update();
 
     balanceChart.data.labels = balanceTimeline.map(item => item.date);
     balanceChart.data.datasets[0].data = balanceTimeline.map(item => item.balance);
     balanceChart.update();
+
+    bindDeleteButtons();
+}
+
+// =======================
+// BOTONES BORRAR
+// =======================
+function bindDeleteButtons() {
+    document.querySelectorAll(".delete-btn").forEach(button => {
+        button.addEventListener("click", async () => {
+            const id = button.getAttribute("data-id");
+            await deleteExpense(id);
+        });
+    });
 }
 
 // =======================
 // BUSCADOR
 // =======================
-document.getElementById("searchInput").addEventListener("input", function () {
+searchInput.addEventListener("input", function () {
     const val = this.value.toLowerCase();
-    document.querySelectorAll("#expenseTable tbody tr").forEach(tr => {
+    document.querySelectorAll("#expenseTable tbody tr").forEach((tr) => {
         tr.style.display = tr.textContent.toLowerCase().includes(val) ? "" : "none";
     });
 });
 
 // =======================
+// CAMBIAR TAB
+// =======================
+function activateTab(tabId) {
+    document.querySelectorAll("nav li").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+
+    document.querySelector(`nav li[data-tab="${tabId}"]`)?.classList.add("active");
+    document.getElementById(tabId)?.classList.add("active");
+}
+
+// =======================
 // ESTADO DE SESIÓN
 // =======================
 onAuthStateChanged(auth, async (user) => {
-    const authSection = document.getElementById("authSection");
-
     if (user) {
         authSection.style.display = "none";
+        logoutBtn.style.display = "inline-block";
+        userInfo.textContent = `Bienvenido, ${user.email}`;
         await loadData();
     } else {
         authSection.style.display = "block";
+        logoutBtn.style.display = "none";
+        userInfo.textContent = "";
         expenses = [];
         update();
+        activateTab("dashboard");
     }
 });
-
-
-
-
-
-
-
-
-
-
-
