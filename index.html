@@ -1,109 +1,146 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
     <title>💸 Controla tus finanzas</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
 
-<header>
-    <div class="logo">💸Cuida Tus Finanzas</div>
-    <nav>
-        <ul>
-            <li class="active" data-tab="dashboard"><i class="fas fa-chart-line"></i> <span class="nav-text">Resumen</span></li>
-            <li data-tab="register"><i class="fas fa-plus-circle"></i> <span class="nav-text">Registrar</span></li>
-            <li data-tab="history"><i class="fas fa-table"></i> <span class="nav-text">Historial</span></li>
-        </ul>
-    </nav>
-</header>
+    <header>
+        <div class="logo">💸 Cuida Tus Finanzas</div>
 
-<section id="authSection">
-    <h2>Iniciar sesión</h2>
-    <input type="email" id="email" placeholder="Correo">
-    <input type="password" id="password" placeholder="Contraseña">
-    <button id="loginBtn">Ingresar</button>
-    <button id="registerBtn">Registrarse</button>
-</section>
-
-<main>
-    <section id="dashboard" class="tab-content active">
-        <h1>Tu resumen financiero</h1>
-        <div class="cards">
-            <div class="card">
-                <h3>Saldo Disponible</h3>
-                <p id="balance">S/ 0.00</p>
-            </div>
-            <div class="card">
-                <h3>Total Gastos</h3>
-                <p id="totalExpenses">S/ 0.00</p>
-            </div>
-            <div class="card">
-                <h3>Total Ingresos</h3>
-                <p id="totalIncome">S/ 0.00</p>
-            </div>
+        <div class="header-right">
+            <div id="userInfo" class="user-info"></div>
+            <button id="logoutBtn" class="logout-btn" style="display: none;">
+                <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+            </button>
         </div>
-        <div class="charts">
-            <canvas id="categoryChart"></canvas>
-            <canvas id="balanceChart"></canvas>
+
+        <nav>
+            <ul>
+                <li class="active" data-tab="dashboard">
+                    <i class="fas fa-chart-line"></i> <span class="nav-text">Resumen</span>
+                </li>
+                <li data-tab="register">
+                    <i class="fas fa-plus-circle"></i> <span class="nav-text">Registrar</span>
+                </li>
+                <li data-tab="history">
+                    <i class="fas fa-table"></i> <span class="nav-text">Historial</span>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="authSection" class="auth-section">
+        <div class="auth-card">
+            <h2>Iniciar sesión</h2>
+            <input type="email" id="email" placeholder="Correo" />
+            <input type="password" id="password" placeholder="Contraseña" />
+            <div class="auth-buttons">
+                <button id="loginBtn">Ingresar</button>
+                <button id="registerBtn">Registrarse</button>
+            </div>
         </div>
     </section>
 
-    <section id="register" class="tab-content">
-        <h1>Registrar movimiento</h1>
-        <form id="expenseForm">
-            <input type="date" id="date" required>
-            <select id="category" required>
-                <option value="" disabled selected>Selecciona Categoría</option>
-                <option>Comida</option>
-                <option>Transporte</option>
-                <option>Entretenimiento</option>
-                <option>Remuneración</option>
-                <option>Salud</option>
-                <option>Vivienda</option>
-            </select>
-            <input type="text" id="description" placeholder="Descripción" required>
-            <input type="number" id="amount" step="0.01" min="0" placeholder="Monto (S/)" required>
-            <select id="payment" required>
-                <option>Efectivo</option>
-                <option>Tarjeta</option>
-                <option>Transferencia</option>
-            </select>
-            <select id="type" required>
-                <option>Gasto</option>
-                <option>Ingreso</option>
-            </select>
-            <textarea id="notes" placeholder="Observaciones (opcional)"></textarea>
-            <button type="submit">Agregar Movimiento</button>
-        </form>
-    </section>
+    <main>
+        <section id="dashboard" class="tab-content active">
+            <h1>Tu resumen financiero</h1>
 
-    <section id="history" class="tab-content">
-        <h1>Historial de Movimientos</h1>
-        <input type="text" id="searchInput" placeholder="Buscar en el historial...">
-        <div class="table-container">
-            <table id="expenseTable">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Categoría</th>
-                        <th>Descripción</th>
-                        <th>Monto</th>
-                        <th>Pago</th>
-                        <th>Tipo</th>
-                        <th>Notas</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-    </section>
-</main>
+            <div class="cards">
+                <div class="card">
+                    <h3>Saldo Disponible</h3>
+                    <p id="balance">S/ 0.00</p>
+                </div>
+                <div class="card">
+                    <h3>Total Gastos</h3>
+                    <p id="totalExpenses">S/ 0.00</p>
+                </div>
+                <div class="card">
+                    <h3>Total Ingresos</h3>
+                    <p id="totalIncome">S/ 0.00</p>
+                </div>
+            </div>
 
-<script type="module" src="app.js"></script>
+            <div class="charts">
+                <div class="chart-box pie-box">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+
+                <div class="chart-box line-box">
+                    <canvas id="balanceChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="register" class="tab-content">
+            <h1>Registrar movimiento</h1>
+
+            <form id="expenseForm">
+                <input type="date" id="date" required />
+
+                <select id="category" required>
+                    <option value="" disabled selected>Selecciona categoría</option>
+                    <option>Comida</option>
+                    <option>Transporte</option>
+                    <option>Entretenimiento</option>
+                    <option>Remuneración</option>
+                    <option>Salud</option>
+                    <option>Vivienda</option>
+                </select>
+
+                <input type="text" id="description" placeholder="Descripción" required />
+
+                <input type="number" id="amount" step="0.01" min="0" placeholder="Monto (S/)" required />
+
+                <select id="payment" required>
+                    <option>Efectivo</option>
+                    <option>Tarjeta</option>
+                    <option>Transferencia</option>
+                </select>
+
+                <select id="type" required>
+                    <option>Gasto</option>
+                    <option>Ingreso</option>
+                </select>
+
+                <textarea id="notes" placeholder="Observaciones (opcional)"></textarea>
+
+                <button type="submit">Agregar movimiento</button>
+            </form>
+        </section>
+
+        <section id="history" class="tab-content">
+            <h1>Historial de Movimientos</h1>
+
+            <input type="text" id="searchInput" placeholder="Buscar en el historial..." />
+
+            <div class="table-container">
+                <table id="expenseTable">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Categoría</th>
+                            <th>Descripción</th>
+                            <th>Monto</th>
+                            <th>Pago</th>
+                            <th>Tipo</th>
+                            <th>Notas</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="app.js"></script>
 </body>
 </html>
