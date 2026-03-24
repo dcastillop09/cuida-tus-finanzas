@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="dark">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
@@ -8,9 +8,21 @@
     <link rel="stylesheet" href="style.css" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-box glass">
+            <div class="loading-logo"><i class="fas fa-wallet"></i></div>
+            <h2>Cuida Tus Finanzas</h2>
+            <p>Cargando tus datos financieros...</p>
+            <div class="loading-bar">
+                <span></span>
+            </div>
+        </div>
+    </div>
+
     <div id="toastContainer" class="toast-container"></div>
 
     <header>
@@ -21,15 +33,21 @@
 
         <div class="header-right">
             <div id="userInfo" class="user-info"></div>
+
+            <button id="themeToggleBtn" class="secondary-btn icon-btn" title="Cambiar tema">
+                <i class="fas fa-moon"></i>
+            </button>
+
             <button id="editProfileBtn" class="secondary-btn" style="display:none;">
                 <i class="fas fa-user-pen"></i> Perfil
             </button>
+
             <button id="logoutBtn" class="primary-btn" style="display:none;">
                 <i class="fas fa-right-from-bracket"></i> Cerrar sesión
             </button>
         </div>
 
-        <nav>
+        <nav class="top-nav">
             <ul>
                 <li class="active" data-tab="dashboard">
                     <i class="fas fa-chart-line"></i><span>Resumen</span>
@@ -39,6 +57,9 @@
                 </li>
                 <li data-tab="history">
                     <i class="fas fa-table"></i><span>Historial</span>
+                </li>
+                <li data-tab="goals">
+                    <i class="fas fa-bullseye"></i><span>Meta</span>
                 </li>
             </ul>
         </nav>
@@ -55,6 +76,7 @@
             <div class="auth-form">
                 <input type="email" id="email" placeholder="Correo electrónico" />
                 <input type="password" id="password" placeholder="Contraseña" />
+
                 <div class="auth-buttons">
                     <button id="loginBtn" class="primary-btn">Ingresar</button>
                     <button id="registerBtn" class="secondary-btn">Registrarse</button>
@@ -67,7 +89,7 @@
         <section id="dashboard" class="tab-content active">
             <div class="section-title">
                 <h1>Tu resumen financiero</h1>
-                <p>Controla tus ingresos, gastos y tu progreso de gasto mensual.</p>
+                <p>Controla tus ingresos, gastos, límites y progreso financiero.</p>
             </div>
 
             <div class="cards">
@@ -145,7 +167,7 @@
         <section id="register" class="tab-content">
             <div class="section-title">
                 <h1>Registrar movimiento</h1>
-                <p>Registra ingresos y gastos de forma rápida.</p>
+                <p>Agrega ingresos o gastos de forma rápida.</p>
             </div>
 
             <form id="expenseForm" class="glass movement-form">
@@ -186,7 +208,7 @@
         <section id="history" class="tab-content">
             <div class="section-title">
                 <h1>Historial de movimientos</h1>
-                <p>Consulta, busca, edita o elimina tus registros.</p>
+                <p>Busca, filtra, ordena, edita, elimina y exporta tus movimientos.</p>
             </div>
 
             <div class="history-tools glass">
@@ -205,6 +227,17 @@
                     <option>Salud</option>
                     <option>Vivienda</option>
                 </select>
+                <input type="date" id="filterStartDate" />
+                <input type="date" id="filterEndDate" />
+                <select id="sortOrder">
+                    <option value="newest">Más reciente</option>
+                    <option value="oldest">Más antiguo</option>
+                    <option value="highest">Monto más alto</option>
+                    <option value="lowest">Monto más bajo</option>
+                </select>
+                <button id="exportPdfBtn" class="primary-btn" type="button">
+                    <i class="fas fa-file-pdf"></i> Exportar PDF
+                </button>
             </div>
 
             <div class="table-container glass">
@@ -231,7 +264,81 @@
                 </div>
             </div>
         </section>
+
+        <section id="goals" class="tab-content">
+            <div class="section-title">
+                <h1>Meta de ahorro</h1>
+                <p>Define una meta y sigue tu progreso.</p>
+            </div>
+
+            <div class="goals-grid">
+                <div class="goal-card glass">
+                    <h3>Configura tu meta</h3>
+
+                    <form id="goalForm" class="goal-form">
+                        <input type="number" id="goalInput" min="0" step="0.01" placeholder="Ej: 1000.00" />
+                        <button type="submit" class="primary-btn">Guardar meta</button>
+                    </form>
+                </div>
+
+                <div class="goal-card glass">
+                    <h3>Progreso actual</h3>
+
+                    <div class="goal-status">
+                        <div class="goal-values">
+                            <span>Meta:</span>
+                            <strong id="goalLabel">S/ 0.00</strong>
+                        </div>
+
+                        <div class="goal-values">
+                            <span>Ahorrado:</span>
+                            <strong id="goalSavedLabel">S/ 0.00</strong>
+                        </div>
+
+                        <div class="goal-progress-bar">
+                            <div id="goalProgress" class="goal-progress-fill"></div>
+                        </div>
+
+                        <small id="goalProgressText">Configura una meta para empezar.</small>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
+
+    <footer class="site-footer">
+        <div class="footer-box glass">
+            <h3>Gracias por usar esta app</h3>
+            <p>
+                Esta aplicación fue creada por <strong>Diego Castillo P.</strong> con mucho esfuerzo y dedicación.
+                Esperamos que sea de gran utilidad para un mejor control financiero y una mejor organización de tus gastos e ingresos.
+            </p>
+            <p>
+                Si deseas apoyar económicamente futuras mejoras del proyecto, puedes comunicarte al:
+                <strong>946703630</strong>
+            </p>
+            <small>Hecho por Diego Castillo P. • Gracias a todos por usar el app 💚</small>
+        </div>
+    </footer>
+
+    <nav class="bottom-nav">
+        <button class="bottom-nav-btn active" data-tab="dashboard">
+            <i class="fas fa-chart-line"></i>
+            <span>Resumen</span>
+        </button>
+        <button class="bottom-nav-btn" data-tab="register">
+            <i class="fas fa-plus-circle"></i>
+            <span>Registrar</span>
+        </button>
+        <button class="bottom-nav-btn" data-tab="history">
+            <i class="fas fa-table"></i>
+            <span>Historial</span>
+        </button>
+        <button class="bottom-nav-btn" data-tab="goals">
+            <i class="fas fa-bullseye"></i>
+            <span>Meta</span>
+        </button>
+    </nav>
 
     <!-- Modal perfil -->
     <div id="profileModal" class="modal-overlay hidden">
@@ -247,6 +354,9 @@
 
                 <label>Tope mensual de gastos (S/)</label>
                 <input type="number" id="profileLimitInput" min="0" step="0.01" placeholder="Ej: 400.00" />
+
+                <label>Meta de ahorro (S/)</label>
+                <input type="number" id="profileGoalInput" min="0" step="0.01" placeholder="Ej: 1000.00" />
             </div>
 
             <div class="modal-actions">
@@ -305,6 +415,25 @@
                     <button type="submit" class="primary-btn">Guardar edición</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal eliminar -->
+    <div id="deleteModal" class="modal-overlay hidden">
+        <div class="modal-card glass scale-in delete-modal-card">
+            <div class="modal-header">
+                <h3>Eliminar movimiento</h3>
+                <button class="icon-close" data-close="deleteModal"><i class="fas fa-xmark"></i></button>
+            </div>
+
+            <div class="modal-body">
+                <p>¿Seguro que quieres eliminar este movimiento? Esta acción no se puede deshacer.</p>
+            </div>
+
+            <div class="modal-actions delete-actions">
+                <button id="cancelDeleteBtn" class="secondary-btn">Cancelar</button>
+                <button id="confirmDeleteBtn" class="danger-btn">Sí, eliminar</button>
+            </div>
         </div>
     </div>
 
