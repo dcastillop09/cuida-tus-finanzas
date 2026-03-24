@@ -12,7 +12,9 @@ import {
     doc,
     setDoc,
     getDoc,
-    updateDoc
+    updateDoc,
+    query,
+    where
 } from "./firebase.js";
 
 let expenses = [];
@@ -434,17 +436,20 @@ async function loadData() {
     if (!user) return;
 
     try {
-        const querySnapshot = await getDocs(collection(db, "movimientos"));
+        const q = query(
+            collection(db, "movimientos"),
+            where("uid", "==", user.uid)
+        );
+
+        const querySnapshot = await getDocs(q);
         expenses = [];
 
         querySnapshot.forEach((item) => {
             const data = item.data();
-            if (data.uid === user.uid) {
-                expenses.push({
-                    id: item.id,
-                    ...data
-                });
-            }
+            expenses.push({
+                id: item.id,
+                ...data
+            });
         });
 
         expenses.sort((a, b) => {
