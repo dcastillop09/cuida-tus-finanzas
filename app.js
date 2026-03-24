@@ -12,15 +12,16 @@ import {
     doc,
     setDoc,
     getDoc,
-    updateDoc,
-    query,
-    where
+    updateDoc
 } from "./firebase.js";
 
 let expenses = [];
+let pendingDeleteId = null;
+
 let userProfile = {
     name: "",
     expenseLimit: 0,
+    goalAmount: 0,
     alert90Shown: false,
     alert100Shown: false
 };
@@ -34,6 +35,7 @@ const categoryColors = {
     "Vivienda": "#f1c40f"
 };
 
+const loadingScreen = document.getElementById("loadingScreen");
 const appMain = document.getElementById("appMain");
 const authSection = document.getElementById("authSection");
 const userInfo = document.getElementById("userInfo");
@@ -42,24 +44,35 @@ const registerBtn = document.getElementById("registerBtn");
 const loginBtn = document.getElementById("loginBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const editProfileBtn = document.getElementById("editProfileBtn");
+const themeToggleBtn = document.getElementById("themeToggleBtn");
 
 const form = document.getElementById("expenseForm");
 const limitForm = document.getElementById("limitForm");
+const goalForm = document.getElementById("goalForm");
+
 const searchInput = document.getElementById("searchInput");
 const filterType = document.getElementById("filterType");
 const filterCategory = document.getElementById("filterCategory");
+const filterStartDate = document.getElementById("filterStartDate");
+const filterEndDate = document.getElementById("filterEndDate");
+const sortOrder = document.getElementById("sortOrder");
+const exportPdfBtn = document.getElementById("exportPdfBtn");
 
 const expenseTableBody = document.querySelector("#expenseTable tbody");
 const emptyState = document.getElementById("emptyState");
 
 const profileModal = document.getElementById("profileModal");
 const editMovementModal = document.getElementById("editMovementModal");
+const deleteModal = document.getElementById("deleteModal");
 
 const profileNameInput = document.getElementById("profileNameInput");
 const profileLimitInput = document.getElementById("profileLimitInput");
+const profileGoalInput = document.getElementById("profileGoalInput");
 const saveProfileBtn = document.getElementById("saveProfileBtn");
 
 const editMovementForm = document.getElementById("editMovementForm");
+const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
 
 const expenseLimitLabel = document.getElementById("expenseLimitLabel");
 const limitProgress = document.getElementById("limitProgress");
@@ -69,12 +82,17 @@ const highestExpense = document.getElementById("highestExpense");
 const topCategory = document.getElementById("topCategory");
 const lastMovement = document.getElementById("lastMovement");
 
+const goalLabel = document.getElementById("goalLabel");
+const goalSavedLabel = document.getElementById("goalSavedLabel");
+const goalProgress = document.getElementById("goalProgress");
+const goalProgressText = document.getElementById("goalProgressText");
+
 const categoryChartCtx = document.getElementById("categoryChart").getContext("2d");
 const balanceChartCtx = document.getElementById("balanceChart").getContext("2d");
 
-// =======================
-// TOASTS
-// =======================
+/* =======================
+   TOASTS
+======================= */
 function showToast(title, message, type = "info") {
     const container = document.getElementById("toastContainer");
 
@@ -95,9 +113,28 @@ function showToast(title, message, type = "info") {
     }, 3200);
 }
 
-// =======================
-// CHARTS
-// =======================
+/* =======================
+   THEME
+======================= */
+function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("theme", theme);
+
+    themeToggleBtn.innerHTML = theme === "dark"
+        ? `<i class="fas fa-moon"></i>`
+        : `<i class="fas fa-sun"></i>`;
+}
+
+themeToggleBtn.addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme") || "dark";
+    applyTheme(current === "dark" ? "light" : "dark");
+});
+
+applyTheme(localStorage.getItem("theme") || "dark");
+
+/* =======================
+   CHARTS
+======================= */
 let categoryChart = new Chart(categoryChartCtx, {
     type: "doughnut",
     data: {
@@ -113,7 +150,7 @@ let categoryChart = new Chart(categoryChartCtx, {
         plugins: {
             legend: {
                 position: "bottom",
-                labels: { color: "#fff" }
+                labels: { color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || "#fff" }
             }
         }
     }
@@ -139,42 +176,46 @@ let balanceChart = new Chart(balanceChartCtx, {
         maintainAspectRatio: false,
         plugins: {
             legend: {
-                labels: { color: "#fff" }
+                labels: { color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || "#fff" }
             }
         },
         scales: {
             x: {
-                ticks: { color: "#fff" },
+                ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || "#fff" },
                 grid: { color: "rgba(255,255,255,0.08)" }
             },
             y: {
-                ticks: { color: "#fff" },
+                ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || "#fff" },
                 grid: { color: "rgba(255,255,255,0.08)" }
             }
         }
     }
 });
 
-// =======================
-// NAV TABS
-// =======================
-document.querySelectorAll("nav li").forEach(tab => {
-    tab.addEventListener("click", () => {
-        activateTab(tab.dataset.tab);
-    });
+/* =======================
+   NAV
+======================= */
+document.querySelectorAll(".top-nav li").forEach(tab => {
+    tab.addEventListener("click", () => activateTab(tab.dataset.tab));
+});
+
+document.querySelectorAll(".bottom-nav-btn").forEach(btn => {
+    btn.addEventListener("click", () => activateTab(btn.dataset.tab));
 });
 
 function activateTab(tabId) {
-    document.querySelectorAll("nav li").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".top-nav li").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".bottom-nav-btn").forEach(t => t.classList.remove("active"));
     document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
 
-    document.querySelector(`nav li[data-tab="${tabId}"]`)?.classList.add("active");
+    document.querySelector(`.top-nav li[data-tab="${tabId}"]`)?.classList.add("active");
+    document.querySelector(`.bottom-nav-btn[data-tab="${tabId}"]`)?.classList.add("active");
     document.getElementById(tabId)?.classList.add("active");
 }
 
-// =======================
-// MODALS
-// =======================
+/* =======================
+   MODALS
+======================= */
 function openModal(modal) {
     modal.classList.remove("hidden");
 }
@@ -196,9 +237,14 @@ window.addEventListener("click", (e) => {
     }
 });
 
-// =======================
-// AUTH
-// =======================
+cancelDeleteBtn.addEventListener("click", () => {
+    pendingDeleteId = null;
+    closeModal(deleteModal);
+});
+
+/* =======================
+   AUTH
+======================= */
 registerBtn.addEventListener("click", async () => {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
@@ -219,6 +265,7 @@ registerBtn.addEventListener("click", async () => {
         await setDoc(doc(db, "usuarios", cred.user.uid), {
             name: email.split("@")[0],
             expenseLimit: 0,
+            goalAmount: 0,
             alert90Shown: false,
             alert100Shown: false
         });
@@ -258,12 +305,13 @@ logoutBtn.addEventListener("click", async () => {
     }
 });
 
-// =======================
-// PERFIL
-// =======================
+/* =======================
+   PROFILE
+======================= */
 editProfileBtn.addEventListener("click", () => {
     profileNameInput.value = userProfile.name || "";
     profileLimitInput.value = userProfile.expenseLimit || "";
+    profileGoalInput.value = userProfile.goalAmount || "";
     openModal(profileModal);
 });
 
@@ -273,6 +321,7 @@ saveProfileBtn.addEventListener("click", async () => {
 
     const name = profileNameInput.value.trim();
     const expenseLimit = parseFloat(profileLimitInput.value) || 0;
+    const goalAmount = parseFloat(profileGoalInput.value) || 0;
 
     if (!name) {
         showToast("Nombre requerido", "Ingresa cómo quieres que te llamen.", "warning");
@@ -282,6 +331,7 @@ saveProfileBtn.addEventListener("click", async () => {
     try {
         userProfile.name = name;
         userProfile.expenseLimit = expenseLimit;
+        userProfile.goalAmount = goalAmount;
         userProfile.alert90Shown = false;
         userProfile.alert100Shown = false;
 
@@ -290,6 +340,7 @@ saveProfileBtn.addEventListener("click", async () => {
         closeModal(profileModal);
         userInfo.textContent = `Bienvenido, ${userProfile.name}`;
         updateLimitUI();
+        updateGoalUI();
         checkExpenseLimitAlerts();
         showToast("Perfil actualizado", "Tus datos se guardaron correctamente.", "success");
     } catch (error) {
@@ -298,9 +349,9 @@ saveProfileBtn.addEventListener("click", async () => {
     }
 });
 
-// =======================
-// PERFIL DATA
-// =======================
+/* =======================
+   PROFILE DATA
+======================= */
 async function loadUserProfile(user) {
     const ref = doc(db, "usuarios", user.uid);
     const snap = await getDoc(ref);
@@ -309,6 +360,7 @@ async function loadUserProfile(user) {
         userProfile = {
             name: snap.data().name || user.email.split("@")[0],
             expenseLimit: Number(snap.data().expenseLimit || 0),
+            goalAmount: Number(snap.data().goalAmount || 0),
             alert90Shown: !!snap.data().alert90Shown,
             alert100Shown: !!snap.data().alert100Shown
         };
@@ -316,6 +368,7 @@ async function loadUserProfile(user) {
         userProfile = {
             name: user.email.split("@")[0],
             expenseLimit: 0,
+            goalAmount: 0,
             alert90Shown: false,
             alert100Shown: false
         };
@@ -324,6 +377,7 @@ async function loadUserProfile(user) {
 
     userInfo.textContent = `Bienvenido, ${userProfile.name}`;
     updateLimitUI();
+    updateGoalUI();
 }
 
 async function persistAlerts() {
@@ -336,12 +390,11 @@ async function persistAlerts() {
     });
 }
 
-// =======================
-// LIMIT FORM
-// =======================
+/* =======================
+   LIMIT + GOAL FORMS
+======================= */
 limitForm.addEventListener("submit", async (e) => {
     e.preventDefault();
-
     const user = auth.currentUser;
     if (!user) return;
 
@@ -373,9 +426,37 @@ limitForm.addEventListener("submit", async (e) => {
     }
 });
 
-// =======================
-// MOVEMENTS CREATE
-// =======================
+goalForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const value = parseFloat(document.getElementById("goalInput").value);
+
+    if (isNaN(value) || value < 0) {
+        showToast("Meta inválida", "Ingresa una meta válida.", "warning");
+        return;
+    }
+
+    try {
+        userProfile.goalAmount = value;
+
+        await updateDoc(doc(db, "usuarios", user.uid), {
+            goalAmount: value
+        });
+
+        document.getElementById("goalInput").value = "";
+        updateGoalUI();
+        showToast("Meta guardada", "Tu meta de ahorro fue actualizada.", "success");
+    } catch (error) {
+        console.error(error);
+        showToast("Error", "No se pudo guardar la meta.", "error");
+    }
+});
+
+/* =======================
+   CREATE MOVEMENT
+======================= */
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -428,28 +509,25 @@ form.addEventListener("submit", async (e) => {
     }
 });
 
-// =======================
-// LOAD DATA
-// =======================
+/* =======================
+   LOAD DATA
+======================= */
 async function loadData() {
     const user = auth.currentUser;
     if (!user) return;
 
     try {
-        const q = query(
-            collection(db, "movimientos"),
-            where("uid", "==", user.uid)
-        );
-
-        const querySnapshot = await getDocs(q);
+        const querySnapshot = await getDocs(collection(db, "movimientos"));
         expenses = [];
 
         querySnapshot.forEach((item) => {
             const data = item.data();
-            expenses.push({
-                id: item.id,
-                ...data
-            });
+            if (data.uid === user.uid) {
+                expenses.push({
+                    id: item.id,
+                    ...data
+                });
+            }
         });
 
         expenses.sort((a, b) => {
@@ -466,9 +544,50 @@ async function loadData() {
     }
 }
 
-// =======================
-// UPDATE UI
-// =======================
+/* =======================
+   FILTERED EXPENSES
+======================= */
+function getFilteredExpenses() {
+    let filtered = [...expenses];
+
+    const searchVal = searchInput.value.toLowerCase().trim();
+    const typeVal = filterType.value;
+    const categoryVal = filterCategory.value;
+    const startVal = filterStartDate.value;
+    const endVal = filterEndDate.value;
+    const sortVal = sortOrder.value;
+
+    filtered = filtered.filter((item) => {
+        const matchesSearch =
+            item.description.toLowerCase().includes(searchVal) ||
+            item.category.toLowerCase().includes(searchVal) ||
+            (item.notes || "").toLowerCase().includes(searchVal) ||
+            item.date.toLowerCase().includes(searchVal);
+
+        const matchesType = !typeVal || item.type === typeVal;
+        const matchesCategory = !categoryVal || item.category === categoryVal;
+        const matchesStart = !startVal || item.date >= startVal;
+        const matchesEnd = !endVal || item.date <= endVal;
+
+        return matchesSearch && matchesType && matchesCategory && matchesStart && matchesEnd;
+    });
+
+    if (sortVal === "newest") {
+        filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+    } else if (sortVal === "oldest") {
+        filtered.sort((a, b) => new Date(a.date) - new Date(b.date));
+    } else if (sortVal === "highest") {
+        filtered.sort((a, b) => Number(b.amount) - Number(a.amount));
+    } else if (sortVal === "lowest") {
+        filtered.sort((a, b) => Number(a.amount) - Number(b.amount));
+    }
+
+    return filtered;
+}
+
+/* =======================
+   UPDATE UI
+======================= */
 function update() {
     let totalExpenses = 0;
     let totalIncome = 0;
@@ -478,22 +597,6 @@ function update() {
     let last = "-";
 
     expenseTableBody.innerHTML = "";
-
-    const filteredExpenses = expenses.filter((item) => {
-        const searchVal = searchInput.value.toLowerCase().trim();
-        const typeVal = filterType.value;
-        const categoryVal = filterCategory.value;
-
-        const matchesSearch = item.description.toLowerCase().includes(searchVal) ||
-            item.category.toLowerCase().includes(searchVal) ||
-            (item.notes || "").toLowerCase().includes(searchVal) ||
-            item.date.toLowerCase().includes(searchVal);
-
-        const matchesType = !typeVal || item.type === typeVal;
-        const matchesCategory = !categoryVal || item.category === categoryVal;
-
-        return matchesSearch && matchesType && matchesCategory;
-    });
 
     expenses.forEach((e) => {
         if (e.type === "Gasto") {
@@ -509,6 +612,8 @@ function update() {
             balance: totalIncome - totalExpenses
         });
     });
+
+    const filteredExpenses = getFilteredExpenses();
 
     filteredExpenses.forEach((e, index) => {
         const row = document.createElement("tr");
@@ -565,37 +670,35 @@ function update() {
 
     bindActionButtons();
     updateLimitUI(totalExpenses);
+    updateGoalUI(totalIncome - totalExpenses);
 }
 
-// =======================
-// ACTION BUTTONS
-// =======================
+/* =======================
+   ACTIONS
+======================= */
 function bindActionButtons() {
     document.querySelectorAll(".delete-btn").forEach(btn => {
-        btn.addEventListener("click", async () => {
-            const id = btn.dataset.id;
-            await deleteExpense(id);
+        btn.addEventListener("click", () => {
+            pendingDeleteId = btn.dataset.id;
+            openModal(deleteModal);
         });
     });
 
     document.querySelectorAll(".edit-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-            const id = btn.dataset.id;
-            openEditMovement(id);
+            openEditMovement(btn.dataset.id);
         });
     });
 }
 
-// =======================
-// DELETE
-// =======================
-async function deleteExpense(id) {
-    const confirmDelete = confirm("¿Seguro que quieres eliminar este movimiento?");
-    if (!confirmDelete) return;
+confirmDeleteBtn.addEventListener("click", async () => {
+    if (!pendingDeleteId) return;
 
     try {
-        await deleteDoc(doc(db, "movimientos", id));
-        expenses = expenses.filter(item => item.id !== id);
+        await deleteDoc(doc(db, "movimientos", pendingDeleteId));
+        expenses = expenses.filter(item => item.id !== pendingDeleteId);
+        pendingDeleteId = null;
+        closeModal(deleteModal);
         update();
         checkExpenseLimitAlerts();
         showToast("Movimiento eliminado", "El registro fue eliminado correctamente.", "success");
@@ -603,11 +706,11 @@ async function deleteExpense(id) {
         console.error(error);
         showToast("Error", "No se pudo eliminar el registro.", "error");
     }
-}
+});
 
-// =======================
-// EDIT MOVEMENT
-// =======================
+/* =======================
+   EDIT
+======================= */
 function openEditMovement(id) {
     const movement = expenses.find(item => item.id === id);
     if (!movement) return;
@@ -668,9 +771,9 @@ editMovementForm.addEventListener("submit", async (e) => {
     }
 });
 
-// =======================
-// LIMIT UI + ALERTS
-// =======================
+/* =======================
+   LIMIT + ALERTS
+======================= */
 function getCurrentTotalExpenses() {
     return expenses
         .filter(item => item.type === "Gasto")
@@ -742,16 +845,79 @@ async function checkExpenseLimitAlerts() {
     }
 }
 
-// =======================
-// FILTERS
-// =======================
+/* =======================
+   GOALS
+======================= */
+function updateGoalUI(savedAmountParam = null) {
+    const savedAmount = savedAmountParam ?? (
+        expenses.reduce((acc, item) => {
+            return item.type === "Ingreso"
+                ? acc + Number(item.amount)
+                : acc - Number(item.amount);
+        }, 0)
+    );
+
+    const goal = Number(userProfile.goalAmount || 0);
+
+    goalLabel.textContent = `S/ ${goal.toFixed(2)}`;
+    goalSavedLabel.textContent = `S/ ${savedAmount.toFixed(2)}`;
+
+    if (!goal || goal <= 0) {
+        goalProgress.style.width = "0%";
+        goalProgressText.textContent = "Configura una meta para empezar.";
+        return;
+    }
+
+    const progress = Math.max(0, Math.min((savedAmount / goal) * 100, 100));
+    goalProgress.style.width = `${progress}%`;
+    goalProgressText.textContent = `Llevas ${progress.toFixed(1)}% de tu meta de ahorro.`;
+}
+
+/* =======================
+   FILTERS + PDF
+======================= */
 searchInput.addEventListener("input", update);
 filterType.addEventListener("change", update);
 filterCategory.addEventListener("change", update);
+filterStartDate.addEventListener("change", update);
+filterEndDate.addEventListener("change", update);
+sortOrder.addEventListener("change", update);
 
-// =======================
-// SESSION STATE
-// =======================
+exportPdfBtn.addEventListener("click", () => {
+    const filtered = getFilteredExpenses();
+    const { jsPDF } = window.jspdf;
+    const docPdf = new jsPDF();
+
+    docPdf.setFontSize(16);
+    docPdf.text("Reporte de movimientos - Cuida Tus Finanzas", 14, 18);
+
+    docPdf.setFontSize(11);
+    docPdf.text(`Usuario: ${userProfile.name || "Usuario"}`, 14, 28);
+    docPdf.text(`Generado: ${new Date().toLocaleString()}`, 14, 35);
+
+    let y = 46;
+    filtered.forEach((item, index) => {
+        const line = `${index + 1}. ${item.date} | ${item.type} | ${item.category} | S/ ${Number(item.amount).toFixed(2)} | ${item.description}`;
+        docPdf.text(line, 14, y);
+        y += 8;
+
+        if (y > 280) {
+            docPdf.addPage();
+            y = 20;
+        }
+    });
+
+    if (filtered.length === 0) {
+        docPdf.text("No hay movimientos para exportar.", 14, y);
+    }
+
+    docPdf.save("reporte-financiero.pdf");
+    showToast("PDF exportado", "Tu reporte se descargó correctamente.", "success");
+});
+
+/* =======================
+   SESSION STATE
+======================= */
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         authSection.style.display = "none";
@@ -777,10 +943,13 @@ onAuthStateChanged(auth, async (user) => {
         userProfile = {
             name: "",
             expenseLimit: 0,
+            goalAmount: 0,
             alert90Shown: false,
             alert100Shown: false
         };
 
         update();
     }
+
+    setTimeout(() => loadingScreen.classList.add("hide"), 500);
 });
