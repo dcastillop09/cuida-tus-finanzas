@@ -3,86 +3,152 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-    <title>💸 Controla tus finanzas</title>
+    <title>💸 Cuida Tus Finanzas</title>
 
     <link rel="stylesheet" href="style.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
+    <div id="toastContainer" class="toast-container"></div>
 
     <header>
-        <div class="logo">💸 Cuida Tus Finanzas</div>
+        <div class="logo-wrap">
+            <div class="logo-icon"><i class="fas fa-coins"></i></div>
+            <div class="logo-text">Cuida Tus Finanzas</div>
+        </div>
 
         <div class="header-right">
             <div id="userInfo" class="user-info"></div>
-            <button id="logoutBtn" class="logout-btn" style="display: none;">
-                <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+            <button id="editProfileBtn" class="secondary-btn" style="display:none;">
+                <i class="fas fa-user-pen"></i> Perfil
+            </button>
+            <button id="logoutBtn" class="primary-btn" style="display:none;">
+                <i class="fas fa-right-from-bracket"></i> Cerrar sesión
             </button>
         </div>
 
         <nav>
             <ul>
                 <li class="active" data-tab="dashboard">
-                    <i class="fas fa-chart-line"></i> <span class="nav-text">Resumen</span>
+                    <i class="fas fa-chart-line"></i><span>Resumen</span>
                 </li>
                 <li data-tab="register">
-                    <i class="fas fa-plus-circle"></i> <span class="nav-text">Registrar</span>
+                    <i class="fas fa-plus-circle"></i><span>Registrar</span>
                 </li>
                 <li data-tab="history">
-                    <i class="fas fa-table"></i> <span class="nav-text">Historial</span>
+                    <i class="fas fa-table"></i><span>Historial</span>
                 </li>
             </ul>
         </nav>
     </header>
 
     <section id="authSection" class="auth-section">
-        <div class="auth-card">
-            <h2>Iniciar sesión</h2>
-            <input type="email" id="email" placeholder="Correo" />
-            <input type="password" id="password" placeholder="Contraseña" />
-            <div class="auth-buttons">
-                <button id="loginBtn">Ingresar</button>
-                <button id="registerBtn">Registrarse</button>
+        <div class="auth-card glass reveal-up">
+            <div class="auth-top">
+                <div class="auth-icon"><i class="fas fa-wallet"></i></div>
+                <h2>Bienvenido</h2>
+                <p>Inicia sesión o crea tu cuenta para gestionar tus finanzas desde cualquier dispositivo.</p>
+            </div>
+
+            <div class="auth-form">
+                <input type="email" id="email" placeholder="Correo electrónico" />
+                <input type="password" id="password" placeholder="Contraseña" />
+                <div class="auth-buttons">
+                    <button id="loginBtn" class="primary-btn">Ingresar</button>
+                    <button id="registerBtn" class="secondary-btn">Registrarse</button>
+                </div>
             </div>
         </div>
     </section>
 
-    <main>
+    <main id="appMain" class="app-hidden">
         <section id="dashboard" class="tab-content active">
-            <h1>Tu resumen financiero</h1>
+            <div class="section-title">
+                <h1>Tu resumen financiero</h1>
+                <p>Controla tus ingresos, gastos y tu progreso de gasto mensual.</p>
+            </div>
 
             <div class="cards">
-                <div class="card">
+                <div class="card glass hover-lift">
+                    <div class="card-icon green"><i class="fas fa-wallet"></i></div>
                     <h3>Saldo Disponible</h3>
                     <p id="balance">S/ 0.00</p>
                 </div>
-                <div class="card">
+
+                <div class="card glass hover-lift">
+                    <div class="card-icon red"><i class="fas fa-arrow-trend-down"></i></div>
                     <h3>Total Gastos</h3>
                     <p id="totalExpenses">S/ 0.00</p>
                 </div>
-                <div class="card">
+
+                <div class="card glass hover-lift">
+                    <div class="card-icon blue"><i class="fas fa-arrow-trend-up"></i></div>
                     <h3>Total Ingresos</h3>
                     <p id="totalIncome">S/ 0.00</p>
                 </div>
             </div>
 
+            <div class="limit-grid">
+                <div class="limit-card glass">
+                    <div class="limit-header">
+                        <h3>Tope de gastos</h3>
+                        <span id="expenseLimitLabel">No configurado</span>
+                    </div>
+
+                    <div class="limit-progress-wrap">
+                        <div class="limit-progress-bar">
+                            <div id="limitProgress" class="limit-progress-fill"></div>
+                        </div>
+                        <small id="limitProgressText">Configura tu tope mensual de gasto.</small>
+                    </div>
+
+                    <form id="limitForm" class="limit-form">
+                        <input type="number" id="expenseLimitInput" min="0" step="0.01" placeholder="Ej: 400.00" />
+                        <button type="submit" class="primary-btn">Guardar tope</button>
+                    </form>
+                </div>
+
+                <div class="insight-card glass">
+                    <h3>Resumen rápido</h3>
+                    <div class="insight-list">
+                        <div class="insight-item">
+                            <span>Gasto más alto</span>
+                            <strong id="highestExpense">S/ 0.00</strong>
+                        </div>
+                        <div class="insight-item">
+                            <span>Categoría más usada</span>
+                            <strong id="topCategory">-</strong>
+                        </div>
+                        <div class="insight-item">
+                            <span>Último movimiento</span>
+                            <strong id="lastMovement">-</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="charts">
-                <div class="chart-box pie-box">
+                <div class="chart-box glass">
+                    <div class="chart-title">Distribución de gastos</div>
                     <canvas id="categoryChart"></canvas>
                 </div>
 
-                <div class="chart-box line-box">
+                <div class="chart-box glass">
+                    <div class="chart-title">Saldo acumulado</div>
                     <canvas id="balanceChart"></canvas>
                 </div>
             </div>
         </section>
 
         <section id="register" class="tab-content">
-            <h1>Registrar movimiento</h1>
+            <div class="section-title">
+                <h1>Registrar movimiento</h1>
+                <p>Registra ingresos y gastos de forma rápida.</p>
+            </div>
 
-            <form id="expenseForm">
+            <form id="expenseForm" class="glass movement-form">
                 <input type="date" id="date" required />
 
                 <select id="category" required>
@@ -96,7 +162,6 @@
                 </select>
 
                 <input type="text" id="description" placeholder="Descripción" required />
-
                 <input type="number" id="amount" step="0.01" min="0" placeholder="Monto (S/)" required />
 
                 <select id="payment" required>
@@ -112,16 +177,37 @@
 
                 <textarea id="notes" placeholder="Observaciones (opcional)"></textarea>
 
-                <button type="submit">Agregar movimiento</button>
+                <button type="submit" id="submitMovementBtn" class="primary-btn">
+                    <i class="fas fa-plus"></i> Agregar movimiento
+                </button>
             </form>
         </section>
 
         <section id="history" class="tab-content">
-            <h1>Historial de Movimientos</h1>
+            <div class="section-title">
+                <h1>Historial de movimientos</h1>
+                <p>Consulta, busca, edita o elimina tus registros.</p>
+            </div>
 
-            <input type="text" id="searchInput" placeholder="Buscar en el historial..." />
+            <div class="history-tools glass">
+                <input type="text" id="searchInput" placeholder="Buscar..." />
+                <select id="filterType">
+                    <option value="">Todos los tipos</option>
+                    <option value="Gasto">Gastos</option>
+                    <option value="Ingreso">Ingresos</option>
+                </select>
+                <select id="filterCategory">
+                    <option value="">Todas las categorías</option>
+                    <option>Comida</option>
+                    <option>Transporte</option>
+                    <option>Entretenimiento</option>
+                    <option>Remuneración</option>
+                    <option>Salud</option>
+                    <option>Vivienda</option>
+                </select>
+            </div>
 
-            <div class="table-container">
+            <div class="table-container glass">
                 <table id="expenseTable">
                     <thead>
                         <tr>
@@ -132,14 +218,95 @@
                             <th>Pago</th>
                             <th>Tipo</th>
                             <th>Notas</th>
-                            <th>Acción</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
+
+                <div id="emptyState" class="empty-state" style="display:none;">
+                    <i class="fas fa-folder-open"></i>
+                    <h3>No hay movimientos</h3>
+                    <p>Empieza registrando tu primer ingreso o gasto.</p>
+                </div>
             </div>
         </section>
     </main>
+
+    <!-- Modal perfil -->
+    <div id="profileModal" class="modal-overlay hidden">
+        <div class="modal-card glass scale-in">
+            <div class="modal-header">
+                <h3>Editar perfil</h3>
+                <button class="icon-close" data-close="profileModal"><i class="fas fa-xmark"></i></button>
+            </div>
+
+            <div class="modal-body">
+                <label>¿Cómo quieres que te llamen?</label>
+                <input type="text" id="profileNameInput" placeholder="Ej: Diego" />
+
+                <label>Tope mensual de gastos (S/)</label>
+                <input type="number" id="profileLimitInput" min="0" step="0.01" placeholder="Ej: 400.00" />
+            </div>
+
+            <div class="modal-actions">
+                <button id="saveProfileBtn" class="primary-btn">Guardar cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal editar movimiento -->
+    <div id="editMovementModal" class="modal-overlay hidden">
+        <div class="modal-card glass scale-in">
+            <div class="modal-header">
+                <h3>Editar movimiento</h3>
+                <button class="icon-close" data-close="editMovementModal"><i class="fas fa-xmark"></i></button>
+            </div>
+
+            <form id="editMovementForm" class="modal-body">
+                <input type="hidden" id="editId" />
+
+                <label>Fecha</label>
+                <input type="date" id="editDate" required />
+
+                <label>Categoría</label>
+                <select id="editCategory" required>
+                    <option>Comida</option>
+                    <option>Transporte</option>
+                    <option>Entretenimiento</option>
+                    <option>Remuneración</option>
+                    <option>Salud</option>
+                    <option>Vivienda</option>
+                </select>
+
+                <label>Descripción</label>
+                <input type="text" id="editDescription" required />
+
+                <label>Monto</label>
+                <input type="number" id="editAmount" min="0" step="0.01" required />
+
+                <label>Pago</label>
+                <select id="editPayment" required>
+                    <option>Efectivo</option>
+                    <option>Tarjeta</option>
+                    <option>Transferencia</option>
+                </select>
+
+                <label>Tipo</label>
+                <select id="editType" required>
+                    <option>Gasto</option>
+                    <option>Ingreso</option>
+                </select>
+
+                <label>Notas</label>
+                <textarea id="editNotes"></textarea>
+
+                <div class="modal-actions">
+                    <button type="submit" class="primary-btn">Guardar edición</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script type="module" src="app.js"></script>
 </body>
