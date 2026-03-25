@@ -14,9 +14,7 @@ import {
   doc,
   setDoc,
   getDoc,
-  updateDoc,
-  query,
-  where
+  updateDoc
 } from "./firebase.js";
 
 let expenses = [];
@@ -137,7 +135,10 @@ let categoryChart = new Chart(categoryChartCtx, {
   type: "doughnut",
   data: {
     labels: [],
-    datasets: [{ data: [], backgroundColor: [] }]
+    datasets: [{
+      data: [],
+      backgroundColor: []
+    }]
   },
   options: {
     responsive: true,
@@ -459,19 +460,17 @@ async function loadData() {
   if (!user) return;
 
   try {
-    const q = query(
-      collection(db, "movimientos"),
-      where("uid", "==", user.uid)
-    );
-
-    const querySnapshot = await getDocs(q);
+    const querySnapshot = await getDocs(collection(db, "movimientos"));
     expenses = [];
 
     querySnapshot.forEach((item) => {
-      expenses.push({
-        id: item.id,
-        ...item.data()
-      });
+      const data = item.data();
+      if (data.uid === user.uid) {
+        expenses.push({
+          id: item.id,
+          ...data
+        });
+      }
     });
 
     expenses.sort((a, b) => {
@@ -483,7 +482,7 @@ async function loadData() {
     update();
   } catch (error) {
     console.error("ERROR LOAD DATA:", error);
-    showToast("Error", `${error.code || ""} ${error.message || "No se pudieron cargar los movimientos."}`, "error");
+    showToast("Error", "No se pudieron cargar los movimientos.", "error");
   }
 }
 
