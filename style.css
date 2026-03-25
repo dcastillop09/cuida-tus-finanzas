@@ -1130,3 +1130,24 @@ select option {
     width: 100%;
   }
 }
+
+/* =========================
+   FORM HINT (GUÍA USUARIO)
+========================= */
+
+.form-hint {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: var(--muted);
+  line-height: 1.5;
+  max-width: 500px;
+}
+
+/* un poquito más visible en móvil */
+@media (max-width: 768px) {
+  .form-hint {
+    font-size: 0.85rem;
+    line-height: 1.4;
+  }
+}
