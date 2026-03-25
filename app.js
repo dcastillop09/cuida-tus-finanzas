@@ -350,8 +350,22 @@ function openTutorial(step = 1) {
 }
 
 function closeTutorial() {
-  markTutorialAsSeen(getCurrentUser());
+  const user = getCurrentUser();
+
+  markTutorialAsSeen(user);
   closeModal(DOM.modals.tutorialModal);
+
+  // 🔥 MEJORA UX: si no tiene movimientos, lo mandamos a registrar
+  if (expenses.length === 0) {
+    setTimeout(() => {
+      activateTab("register");
+
+      // enfocar descripción para guiarlo
+      if (DOM.movement.description) {
+        DOM.movement.description.focus();
+      }
+    }, 300);
+  }
 }
 
 function nextTutorialStep() {
