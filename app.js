@@ -91,15 +91,38 @@ const monthlyTrendBadge = document.getElementById("monthlyTrendBadge");
 const comparisonText = document.getElementById("comparisonText");
 const comparisonCurrentBar = document.getElementById("comparisonCurrentBar");
 
-const categoryChartCtx = document.getElementById("categoryChart").getContext("2d");
-const balanceChartCtx = document.getElementById("balanceChart").getContext("2d");
+const categoryChartCanvas = document.getElementById("categoryChart");
+const balanceChartCanvas = document.getElementById("balanceChart");
+
+const categoryChartCtx = categoryChartCanvas ? categoryChartCanvas.getContext("2d") : null;
+const balanceChartCtx = balanceChartCanvas ? balanceChartCanvas.getContext("2d") : null;
 
 function formatMoney(value) {
   return `${currency} ${Number(value).toFixed(2)}`;
 }
 
+function setText(el, value) {
+  if (el) el.textContent = value;
+}
+
+function setHtml(el, value) {
+  if (el) el.innerHTML = value;
+}
+
+function setWidth(el, value) {
+  if (el) el.style.width = value;
+}
+
+function safeResizeUpdateChart(chart) {
+  if (!chart) return;
+  chart.resize();
+  chart.update();
+}
+
 function showToast(title, message, type = "info") {
   const container = document.getElementById("toastContainer");
+  if (!container) return;
+
   const toast = document.createElement("div");
   toast.className = `toast ${type}`;
   toast.innerHTML = `
@@ -119,14 +142,18 @@ function showToast(title, message, type = "info") {
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
   localStorage.setItem("theme", theme);
-  themeToggleBtn.textContent = theme === "dark" ? "🌙" : "☀️";
+  if (themeToggleBtn) {
+    themeToggleBtn.textContent = theme === "dark" ? "🌙" : "☀️";
+  }
 }
 
-themeToggleBtn.addEventListener("click", () => {
-  const current = document.documentElement.getAttribute("data-theme") || "dark";
-  applyTheme(current === "dark" ? "light" : "dark");
-  refreshChartsAppearance();
-});
+if (themeToggleBtn) {
+  themeToggleBtn.addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme") || "dark";
+    applyTheme(current === "dark" ? "light" : "dark");
+    refreshChartsAppearance();
+  });
+}
 
 applyTheme(localStorage.getItem("theme") || "dark");
 
@@ -134,7 +161,7 @@ function getThemeTextColor() {
   return getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#fff";
 }
 
-let categoryChart = new Chart(categoryChartCtx, {
+let categoryChart = categoryChartCtx ? new Chart(categoryChartCtx, {
   type: "doughnut",
   data: {
     labels: [],
@@ -153,9 +180,9 @@ let categoryChart = new Chart(categoryChartCtx, {
       }
     }
   }
-});
+}) : null;
 
-let balanceChart = new Chart(balanceChartCtx, {
+let balanceChart = balanceChartCtx ? new Chart(balanceChartCtx, {
   type: "line",
   data: {
     labels: [],
@@ -182,21 +209,24 @@ let balanceChart = new Chart(balanceChartCtx, {
       y: { ticks: { color: getThemeTextColor() } }
     }
   }
-});
+}) : null;
 
 function refreshChartsAppearance() {
   const color = getThemeTextColor();
 
-  categoryChart.options.plugins.legend.labels.color = color;
-  balanceChart.options.plugins.legend.labels.color = color;
-  balanceChart.options.scales.x.ticks.color = color;
-  balanceChart.options.scales.y.ticks.color = color;
+  if (categoryChart) {
+    categoryChart.options.plugins.legend.labels.color = color;
+  }
+
+  if (balanceChart) {
+    balanceChart.options.plugins.legend.labels.color = color;
+    balanceChart.options.scales.x.ticks.color = color;
+    balanceChart.options.scales.y.ticks.color = color;
+  }
 
   setTimeout(() => {
-    categoryChart.resize();
-    categoryChart.update();
-    balanceChart.resize();
-    balanceChart.update();
+    safeResizeUpdateChart(categoryChart);
+    safeResizeUpdateChart(balanceChart);
   }, 100);
 }
 
@@ -225,19 +255,17 @@ function activateTab(tabId) {
   document.getElementById(tabId)?.classList.add("active");
 
   setTimeout(() => {
-    categoryChart.resize();
-    categoryChart.update();
-    balanceChart.resize();
-    balanceChart.update();
+    safeResizeUpdateChart(categoryChart);
+    safeResizeUpdateChart(balanceChart);
   }, 150);
 }
 
 function openModal(modal) {
-  modal.classList.remove("hidden");
+  if (modal) modal.classList.remove("hidden");
 }
 
 function closeModal(modal) {
-  modal.classList.add("hidden");
+  if (modal) modal.classList.add("hidden");
 }
 
 document.querySelectorAll("[data-close]").forEach(btn => {
@@ -252,129 +280,145 @@ window.addEventListener("click", (e) => {
   }
 });
 
-cancelDeleteBtn.addEventListener("click", () => {
-  pendingDeleteId = null;
-  closeModal(deleteModal);
-});
-
-if (toggleFiltersBtn) {
-  toggleFiltersBtn.addEventListener("click", () => {
-    historyFilters.classList.toggle("show");
+if (cancelDeleteBtn) {
+  cancelDeleteBtn.addEventListener("click", () => {
+    pendingDeleteId = null;
+    closeModal(deleteModal);
   });
 }
 
-registerBtn.addEventListener("click", async () => {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
+if (toggleFiltersBtn) {
+  toggleFiltersBtn.addEventListener("click", () => {
+    if (historyFilters) {
+      historyFilters.classList.toggle("show");
+    }
+  });
+}
 
-  if (!email || !password) {
-    showToast("Campos incompletos", "Completa correo y contraseña.", "warning");
-    return;
-  }
+if (registerBtn) {
+  registerBtn.addEventListener("click", async () => {
+    const email = document.getElementById("email")?.value.trim() || "";
+    const password = document.getElementById("password")?.value.trim() || "";
 
-  if (password.length < 6) {
-    showToast("Contraseña inválida", "Debe tener al menos 6 caracteres.", "warning");
-    return;
-  }
-
-  try {
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-    await setDoc(doc(db, "usuarios", cred.user.uid), {
-      name: email.split("@")[0],
-      expenseLimit: 0
-    });
-
-    showToast("Cuenta creada", "Tu cuenta fue registrada correctamente.", "success");
-  } catch (error) {
-    console.error(error);
-    showToast("Error al registrarte", error.message, "error");
-  }
-});
-
-loginBtn.addEventListener("click", async () => {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-
-  if (!email || !password) {
-    showToast("Campos incompletos", "Completa correo y contraseña.", "warning");
-    return;
-  }
-
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    showToast("Bienvenido", "Sesión iniciada correctamente.", "success");
-  } catch (error) {
-    console.error(error);
-    showToast("Error al iniciar sesión", error.message, "error");
-  }
-});
-
-googleLoginBtn.addEventListener("click", async () => {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    const user = result.user;
-
-    const profileRef = doc(db, "usuarios", user.uid);
-    const profileSnap = await getDoc(profileRef);
-
-    if (!profileSnap.exists()) {
-      await setDoc(profileRef, {
-        name: user.displayName || user.email?.split("@")[0] || "Usuario",
-        expenseLimit: 0
-      });
+    if (!email || !password) {
+      showToast("Campos incompletos", "Completa correo y contraseña.", "warning");
+      return;
     }
 
-    showToast("Google login", "Sesión iniciada correctamente.", "success");
-  } catch (error) {
-    console.error(error);
-    showToast("Error con Google", error.message, "error");
-  }
-});
+    if (password.length < 6) {
+      showToast("Contraseña inválida", "Debe tener al menos 6 caracteres.", "warning");
+      return;
+    }
 
-logoutBtn.addEventListener("click", async () => {
-  try {
-    await signOut(auth);
-    showToast("Sesión cerrada", "Vuelve pronto.", "info");
-  } catch (error) {
-    console.error(error);
-    showToast("Error", "No se pudo cerrar sesión.", "error");
-  }
-});
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
 
-editProfileBtn.addEventListener("click", () => {
-  profileNameInput.value = userProfile.name || "";
-  profileLimitInput.value = userProfile.expenseLimit || "";
-  openModal(profileModal);
-});
+      await setDoc(doc(db, "usuarios", cred.user.uid), {
+        name: email.split("@")[0],
+        expenseLimit: 0
+      });
 
-saveProfileBtn.addEventListener("click", async () => {
-  const user = auth.currentUser;
-  if (!user) return;
+      showToast("Cuenta creada", "Tu cuenta fue registrada correctamente.", "success");
+    } catch (error) {
+      console.error(error);
+      showToast("Error al registrarte", error.message, "error");
+    }
+  });
+}
 
-  const name = profileNameInput.value.trim();
-  const expenseLimit = parseFloat(profileLimitInput.value) || 0;
+if (loginBtn) {
+  loginBtn.addEventListener("click", async () => {
+    const email = document.getElementById("email")?.value.trim() || "";
+    const password = document.getElementById("password")?.value.trim() || "";
 
-  if (!name) {
-    showToast("Nombre requerido", "Ingresa un nombre.", "warning");
-    return;
-  }
+    if (!email || !password) {
+      showToast("Campos incompletos", "Completa correo y contraseña.", "warning");
+      return;
+    }
 
-  try {
-    userProfile.name = name;
-    userProfile.expenseLimit = expenseLimit;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      showToast("Bienvenido", "Sesión iniciada correctamente.", "success");
+    } catch (error) {
+      console.error(error);
+      showToast("Error al iniciar sesión", error.message, "error");
+    }
+  });
+}
 
-    await setDoc(doc(db, "usuarios", user.uid), userProfile);
+if (googleLoginBtn) {
+  googleLoginBtn.addEventListener("click", async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
 
-    userInfo.textContent = `Bienvenido, ${userProfile.name}`;
-    updateLimitUI();
-    closeModal(profileModal);
-    showToast("Perfil actualizado", "Tus datos se guardaron correctamente.", "success");
-  } catch (error) {
-    console.error(error);
-    showToast("Error", "No se pudo actualizar el perfil.", "error");
-  }
-});
+      const profileRef = doc(db, "usuarios", user.uid);
+      const profileSnap = await getDoc(profileRef);
+
+      if (!profileSnap.exists()) {
+        await setDoc(profileRef, {
+          name: user.displayName || user.email?.split("@")[0] || "Usuario",
+          expenseLimit: 0
+        });
+      }
+
+      showToast("Google login", "Sesión iniciada correctamente.", "success");
+    } catch (error) {
+      console.error(error);
+      showToast("Error con Google", error.message, "error");
+    }
+  });
+}
+
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", async () => {
+    try {
+      await signOut(auth);
+      showToast("Sesión cerrada", "Vuelve pronto.", "info");
+    } catch (error) {
+      console.error(error);
+      showToast("Error", "No se pudo cerrar sesión.", "error");
+    }
+  });
+}
+
+if (editProfileBtn) {
+  editProfileBtn.addEventListener("click", () => {
+    if (profileNameInput) profileNameInput.value = userProfile.name || "";
+    if (profileLimitInput) profileLimitInput.value = userProfile.expenseLimit || "";
+    openModal(profileModal);
+  });
+}
+
+if (saveProfileBtn) {
+  saveProfileBtn.addEventListener("click", async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const name = profileNameInput?.value.trim() || "";
+    const expenseLimit = parseFloat(profileLimitInput?.value) || 0;
+
+    if (!name) {
+      showToast("Nombre requerido", "Ingresa un nombre.", "warning");
+      return;
+    }
+
+    try {
+      userProfile.name = name;
+      userProfile.expenseLimit = expenseLimit;
+
+      await setDoc(doc(db, "usuarios", user.uid), userProfile);
+
+      setText(userInfo, `Bienvenido, ${userProfile.name}`);
+      updateLimitUI();
+      closeModal(profileModal);
+      showToast("Perfil actualizado", "Tus datos se guardaron correctamente.", "success");
+    } catch (error) {
+      console.error(error);
+      showToast("Error", "No se pudo actualizar el perfil.", "error");
+    }
+  });
+}
 
 async function loadUserProfile(user) {
   const ref = doc(db, "usuarios", user.uid);
@@ -393,85 +437,94 @@ async function loadUserProfile(user) {
     await setDoc(ref, userProfile);
   }
 
-  userInfo.textContent = `Bienvenido, ${userProfile.name}`;
+  setText(userInfo, `Bienvenido, ${userProfile.name}`);
   updateLimitUI();
 }
 
-limitForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const user = auth.currentUser;
-  if (!user) return;
+if (limitForm) {
+  limitForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const user = auth.currentUser;
+    if (!user) return;
 
-  const value = parseFloat(document.getElementById("expenseLimitInput").value);
+    const expenseLimitInput = document.getElementById("expenseLimitInput");
+    const value = parseFloat(expenseLimitInput?.value);
 
-  if (isNaN(value) || value < 0) {
-    showToast("Tope inválido", "Ingresa un monto válido.", "warning");
-    return;
-  }
+    if (isNaN(value) || value < 0) {
+      showToast("Tope inválido", "Ingresa un monto válido.", "warning");
+      return;
+    }
 
-  try {
-    userProfile.expenseLimit = value;
-    await updateDoc(doc(db, "usuarios", user.uid), { expenseLimit: value });
-    document.getElementById("expenseLimitInput").value = "";
-    updateLimitUI();
-    showToast("Tope guardado", "Tu tope mensual fue actualizado.", "success");
-  } catch (error) {
-    console.error(error);
-    showToast("Error", "No se pudo guardar el tope.", "error");
-  }
-});
+    try {
+      userProfile.expenseLimit = value;
+      await updateDoc(doc(db, "usuarios", user.uid), { expenseLimit: value });
+      if (expenseLimitInput) expenseLimitInput.value = "";
+      updateLimitUI();
+      showToast("Tope guardado", "Tu tope mensual fue actualizado.", "success");
+    } catch (error) {
+      console.error(error);
+      showToast("Error", "No se pudo guardar el tope.", "error");
+    }
+  });
+}
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
+if (form) {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  const user = auth.currentUser;
-  if (!user) {
-    showToast("Sesión requerida", "Debes iniciar sesión.", "warning");
-    return;
-  }
+    const user = auth.currentUser;
+    if (!user) {
+      showToast("Sesión requerida", "Debes iniciar sesión.", "warning");
+      return;
+    }
 
-  const date = document.getElementById("date").value;
-  const category = document.getElementById("category").value;
-  const description = document.getElementById("description").value.trim();
-  const amount = parseFloat(document.getElementById("amount").value);
-  const payment = document.getElementById("payment").value;
-  const type = document.getElementById("type").value;
-  const notes = document.getElementById("notes").value.trim();
+    const date = document.getElementById("date")?.value || "";
+    const category = document.getElementById("category")?.value || "";
+    const description = document.getElementById("description")?.value.trim() || "";
+    const amount = parseFloat(document.getElementById("amount")?.value);
+    const payment = document.getElementById("payment")?.value || "";
+    const type = document.getElementById("type")?.value || "";
+    const notes = document.getElementById("notes")?.value.trim() || "";
 
-  if (!date || !category || !description || isNaN(amount) || amount <= 0) {
-    showToast("Campos inválidos", "Completa correctamente el formulario.", "warning");
-    return;
-  }
+    if (!date || !category || !description || isNaN(amount) || amount <= 0) {
+      showToast("Campos inválidos", "Completa correctamente el formulario.", "warning");
+      return;
+    }
 
-  const submitBtn = document.getElementById("submitMovementBtn");
-  submitBtn.disabled = true;
-  submitBtn.textContent = "Guardando...";
+    const submitBtn = document.getElementById("submitMovementBtn");
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Guardando...";
+    }
 
-  try {
-    await addDoc(collection(db, "movimientos"), {
-      uid: user.uid,
-      date,
-      category,
-      description,
-      amount,
-      payment,
-      type,
-      notes,
-      createdAt: Date.now()
-    });
+    try {
+      await addDoc(collection(db, "movimientos"), {
+        uid: user.uid,
+        date,
+        category,
+        description,
+        amount,
+        payment,
+        type,
+        notes,
+        createdAt: Date.now()
+      });
 
-    form.reset();
-    await loadData();
-    activateTab("history");
-    showToast("Movimiento agregado", "Tu registro se guardó correctamente.", "success");
-  } catch (error) {
-    console.error(error);
-    showToast("Error", "No se pudo guardar el movimiento.", "error");
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Agregar movimiento";
-  }
-});
+      form.reset();
+      await loadData();
+      activateTab("history");
+      showToast("Movimiento agregado", "Tu registro se guardó correctamente.", "success");
+    } catch (error) {
+      console.error(error);
+      showToast("Error", "No se pudo guardar el movimiento.", "error");
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Agregar movimiento";
+      }
+    }
+  });
+}
 
 async function loadData() {
   const user = auth.currentUser;
@@ -507,12 +560,12 @@ async function loadData() {
 function getFilteredExpenses() {
   let filtered = [...expenses];
 
-  const searchVal = searchInput.value.toLowerCase().trim();
-  const typeVal = filterType.value;
-  const categoryVal = filterCategory.value;
-  const startVal = filterStartDate.value;
-  const endVal = filterEndDate.value;
-  const sortVal = sortOrder.value;
+  const searchVal = searchInput?.value.toLowerCase().trim() || "";
+  const typeVal = filterType?.value || "";
+  const categoryVal = filterCategory?.value || "";
+  const startVal = filterStartDate?.value || "";
+  const endVal = filterEndDate?.value || "";
+  const sortVal = sortOrder?.value || "newest";
 
   filtered = filtered.filter((item) => {
     const matchesSearch =
@@ -538,17 +591,19 @@ function getFilteredExpenses() {
 }
 
 function renderMobileHistory(filteredExpenses) {
-  mobileHistoryList.innerHTML = "";
+  if (!mobileHistoryList) return;
+
+  setHtml(mobileHistoryList, "");
 
   if (filteredExpenses.length === 0) {
-    mobileHistoryList.innerHTML = `
+    setHtml(mobileHistoryList, `
       <div class="mobile-history-card">
         <div class="empty-state">
           <h3>No hay movimientos</h3>
           <p>Empieza registrando tu primer ingreso o gasto.</p>
         </div>
       </div>
-    `;
+    `);
     return;
   }
 
@@ -604,7 +659,9 @@ function update() {
   let highest = 0;
   let last = "-";
 
-  expenseTableBody.innerHTML = "";
+  if (expenseTableBody) {
+    expenseTableBody.innerHTML = "";
+  }
 
   expenses.forEach((e) => {
     if (e.type === "Gasto") {
@@ -624,6 +681,8 @@ function update() {
   const filteredExpenses = getFilteredExpenses();
 
   filteredExpenses.forEach((e) => {
+    if (!expenseTableBody) return;
+
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${e.date}</td>
@@ -643,40 +702,45 @@ function update() {
 
   renderMobileHistory(filteredExpenses);
 
-  emptyState.classList.toggle("hidden", filteredExpenses.length !== 0);
+  if (emptyState) {
+    emptyState.classList.toggle("hidden", filteredExpenses.length !== 0);
+  }
 
-  document.getElementById("balance").textContent = formatMoney(totalIncome - totalExpenses);
-  document.getElementById("totalExpenses").textContent = formatMoney(totalExpenses);
-  document.getElementById("totalIncome").textContent = formatMoney(totalIncome);
+  setText(document.getElementById("balance"), formatMoney(totalIncome - totalExpenses));
+  setText(document.getElementById("totalExpenses"), formatMoney(totalExpenses));
+  setText(document.getElementById("totalIncome"), formatMoney(totalIncome));
 
-  highestExpense.textContent = formatMoney(highest);
+  setText(highestExpense, formatMoney(highest));
 
   const topCategoryEntry = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0];
-  topCategory.textContent = topCategoryEntry ? topCategoryEntry[0] : "-";
+  setText(topCategory, topCategoryEntry ? topCategoryEntry[0] : "-");
 
   if (expenses.length > 0) {
     const lastItem = expenses[expenses.length - 1];
     last = `${lastItem.description} (${lastItem.date})`;
   }
-  lastMovement.textContent = last;
+  setText(lastMovement, last);
 
   const labels = Object.keys(categoryTotals);
-  categoryChart.data.labels = labels;
-  categoryChart.data.datasets[0].data = Object.values(categoryTotals);
-  categoryChart.data.datasets[0].backgroundColor = labels.map(label => categoryColors[label] || "#ccc");
 
-  balanceChart.data.labels = balanceTimeline.map(item => item.date);
-  balanceChart.data.datasets[0].data = balanceTimeline.map(item => item.balance);
+  if (categoryChart) {
+    categoryChart.data.labels = labels;
+    categoryChart.data.datasets[0].data = Object.values(categoryTotals);
+    categoryChart.data.datasets[0].backgroundColor = labels.map(label => categoryColors[label] || "#ccc");
+  }
+
+  if (balanceChart) {
+    balanceChart.data.labels = balanceTimeline.map(item => item.date);
+    balanceChart.data.datasets[0].data = balanceTimeline.map(item => item.balance);
+  }
 
   updateLimitUI(totalExpenses);
   updateMonthlyComparison();
   bindActionButtons();
 
   setTimeout(() => {
-    categoryChart.resize();
-    categoryChart.update();
-    balanceChart.resize();
-    balanceChart.update();
+    safeResizeUpdateChart(categoryChart);
+    safeResizeUpdateChart(balanceChart);
   }, 100);
 }
 
@@ -688,16 +752,16 @@ function updateLimitUI(totalExpensesParam = null) {
   const limit = Number(userProfile.expenseLimit || 0);
 
   if (!limit || limit <= 0) {
-    expenseLimitLabel.textContent = "No configurado";
-    limitProgress.style.width = "0%";
-    limitProgressText.textContent = "Configura un límite para monitorear tus gastos.";
+    setText(expenseLimitLabel, "No configurado");
+    setWidth(limitProgress, "0%");
+    setText(limitProgressText, "Configura un límite para monitorear tus gastos.");
     return;
   }
 
   const progress = Math.min((totalExpenses / limit) * 100, 100);
-  expenseLimitLabel.textContent = formatMoney(limit);
-  limitProgress.style.width = `${progress}%`;
-  limitProgressText.textContent = `Has gastado ${formatMoney(totalExpenses)} de ${formatMoney(limit)} (${progress.toFixed(1)}%).`;
+  setText(expenseLimitLabel, formatMoney(limit));
+  setWidth(limitProgress, `${progress}%`);
+  setText(limitProgressText, `Has gastado ${formatMoney(totalExpenses)} de ${formatMoney(limit)} (${progress.toFixed(1)}%).`);
 }
 
 function updateMonthlyComparison() {
@@ -728,9 +792,9 @@ function updateMonthlyComparison() {
 
   const diff = current - previous;
 
-  currentMonthExpense.textContent = formatMoney(current);
-  previousMonthExpense.textContent = formatMoney(previous);
-  monthlyDifference.textContent = formatMoney(Math.abs(diff));
+  setText(currentMonthExpense, formatMoney(current));
+  setText(previousMonthExpense, formatMoney(previous));
+  setText(monthlyDifference, formatMoney(Math.abs(diff)));
 
   let percent = 0;
   if (previous > 0) {
@@ -739,20 +803,20 @@ function updateMonthlyComparison() {
     percent = 100;
   }
 
-  comparisonCurrentBar.style.width = `${percent}%`;
+  setWidth(comparisonCurrentBar, `${percent}%`);
 
   if (current > previous) {
-    monthlyTrendBadge.textContent = "Gastaste más";
-    monthlyTrendBadge.className = "trend-badge up";
-    comparisonText.textContent = `Este mes llevas ${formatMoney(diff)} más en gastos que el mes anterior.`;
+    setText(monthlyTrendBadge, "Gastaste más");
+    if (monthlyTrendBadge) monthlyTrendBadge.className = "trend-badge up";
+    setText(comparisonText, `Este mes llevas ${formatMoney(diff)} más en gastos que el mes anterior.`);
   } else if (current < previous) {
-    monthlyTrendBadge.textContent = "Gastaste menos";
-    monthlyTrendBadge.className = "trend-badge down";
-    comparisonText.textContent = `Este mes llevas ${formatMoney(previous - current)} menos en gastos que el mes anterior.`;
+    setText(monthlyTrendBadge, "Gastaste menos");
+    if (monthlyTrendBadge) monthlyTrendBadge.className = "trend-badge down";
+    setText(comparisonText, `Este mes llevas ${formatMoney(previous - current)} menos en gastos que el mes anterior.`);
   } else {
-    monthlyTrendBadge.textContent = "Igual";
-    monthlyTrendBadge.className = "trend-badge neutral";
-    comparisonText.textContent = "Tus gastos están iguales respecto al mes anterior.";
+    setText(monthlyTrendBadge, "Igual");
+    if (monthlyTrendBadge) monthlyTrendBadge.className = "trend-badge neutral";
+    setText(comparisonText, "Tus gastos están iguales respecto al mes anterior.");
   }
 }
 
@@ -771,137 +835,156 @@ function bindActionButtons() {
   });
 }
 
-confirmDeleteBtn.addEventListener("click", async () => {
-  if (!pendingDeleteId) return;
+if (confirmDeleteBtn) {
+  confirmDeleteBtn.addEventListener("click", async () => {
+    if (!pendingDeleteId) return;
 
-  try {
-    await deleteDoc(doc(db, "movimientos", pendingDeleteId));
-    expenses = expenses.filter(item => item.id !== pendingDeleteId);
-    pendingDeleteId = null;
-    closeModal(deleteModal);
-    update();
-    showToast("Movimiento eliminado", "El registro fue eliminado correctamente.", "success");
-  } catch (error) {
-    console.error(error);
-    showToast("Error", "No se pudo eliminar el movimiento.", "error");
-  }
-});
+    try {
+      await deleteDoc(doc(db, "movimientos", pendingDeleteId));
+      expenses = expenses.filter(item => item.id !== pendingDeleteId);
+      pendingDeleteId = null;
+      closeModal(deleteModal);
+      update();
+      showToast("Movimiento eliminado", "El registro fue eliminado correctamente.", "success");
+    } catch (error) {
+      console.error(error);
+      showToast("Error", "No se pudo eliminar el movimiento.", "error");
+    }
+  });
+}
 
 function openEditMovement(id) {
   const movement = expenses.find(item => item.id === id);
   if (!movement) return;
 
-  document.getElementById("editId").value = movement.id;
-  document.getElementById("editDate").value = movement.date;
-  document.getElementById("editCategory").value = movement.category;
-  document.getElementById("editDescription").value = movement.description;
-  document.getElementById("editAmount").value = movement.amount;
-  document.getElementById("editPayment").value = movement.payment;
-  document.getElementById("editType").value = movement.type;
-  document.getElementById("editNotes").value = movement.notes || "";
+  const editId = document.getElementById("editId");
+  const editDate = document.getElementById("editDate");
+  const editCategory = document.getElementById("editCategory");
+  const editDescription = document.getElementById("editDescription");
+  const editAmount = document.getElementById("editAmount");
+  const editPayment = document.getElementById("editPayment");
+  const editType = document.getElementById("editType");
+  const editNotes = document.getElementById("editNotes");
+
+  if (editId) editId.value = movement.id;
+  if (editDate) editDate.value = movement.date;
+  if (editCategory) editCategory.value = movement.category;
+  if (editDescription) editDescription.value = movement.description;
+  if (editAmount) editAmount.value = movement.amount;
+  if (editPayment) editPayment.value = movement.payment;
+  if (editType) editType.value = movement.type;
+  if (editNotes) editNotes.value = movement.notes || "";
 
   openModal(editMovementModal);
 }
 
-editMovementForm.addEventListener("submit", async (e) => {
-  e.preventDefault();
+if (editMovementForm) {
+  editMovementForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-  const id = document.getElementById("editId").value;
+    const id = document.getElementById("editId")?.value || "";
 
-  const updatedData = {
-    date: document.getElementById("editDate").value,
-    category: document.getElementById("editCategory").value,
-    description: document.getElementById("editDescription").value.trim(),
-    amount: parseFloat(document.getElementById("editAmount").value),
-    payment: document.getElementById("editPayment").value,
-    type: document.getElementById("editType").value,
-    notes: document.getElementById("editNotes").value.trim()
-  };
+    const updatedData = {
+      date: document.getElementById("editDate")?.value || "",
+      category: document.getElementById("editCategory")?.value || "",
+      description: document.getElementById("editDescription")?.value.trim() || "",
+      amount: parseFloat(document.getElementById("editAmount")?.value),
+      payment: document.getElementById("editPayment")?.value || "",
+      type: document.getElementById("editType")?.value || "",
+      notes: document.getElementById("editNotes")?.value.trim() || ""
+    };
 
-  if (!updatedData.date || !updatedData.category || !updatedData.description || isNaN(updatedData.amount) || updatedData.amount <= 0) {
-    showToast("Datos inválidos", "Completa correctamente la edición.", "warning");
-    return;
-  }
+    if (!updatedData.date || !updatedData.category || !updatedData.description || isNaN(updatedData.amount) || updatedData.amount <= 0) {
+      showToast("Datos inválidos", "Completa correctamente la edición.", "warning");
+      return;
+    }
 
-  try {
-    await updateDoc(doc(db, "movimientos", id), updatedData);
+    try {
+      await updateDoc(doc(db, "movimientos", id), updatedData);
 
-    const index = expenses.findIndex(item => item.id === id);
-    if (index !== -1) expenses[index] = { ...expenses[index], ...updatedData };
+      const index = expenses.findIndex(item => item.id === id);
+      if (index !== -1) expenses[index] = { ...expenses[index], ...updatedData };
 
-    expenses.sort((a, b) => {
-      const dateDiff = new Date(a.date) - new Date(b.date);
-      if (dateDiff !== 0) return dateDiff;
-      return (a.createdAt || 0) - (b.createdAt || 0);
-    });
+      expenses.sort((a, b) => {
+        const dateDiff = new Date(a.date) - new Date(b.date);
+        if (dateDiff !== 0) return dateDiff;
+        return (a.createdAt || 0) - (b.createdAt || 0);
+      });
 
-    closeModal(editMovementModal);
-    update();
-    showToast("Movimiento actualizado", "Los cambios se guardaron correctamente.", "success");
-  } catch (error) {
-    console.error(error);
-    showToast("Error", "No se pudo actualizar el movimiento.", "error");
-  }
-});
-
-searchInput.addEventListener("input", update);
-filterType.addEventListener("change", update);
-filterCategory.addEventListener("change", update);
-filterStartDate.addEventListener("change", update);
-filterEndDate.addEventListener("change", update);
-sortOrder.addEventListener("change", update);
-
-exportPdfBtn.addEventListener("click", () => {
-  const filtered = getFilteredExpenses();
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF();
-
-  pdf.setFontSize(16);
-  pdf.text("Reporte financiero - Cuida Tus Finanzas", 14, 18);
-
-  pdf.setFontSize(11);
-  pdf.text(`Usuario: ${userProfile.name || "Usuario"}`, 14, 28);
-  pdf.text(`Generado: ${new Date().toLocaleString()}`, 14, 35);
-
-  let y = 46;
-  filtered.forEach((item, index) => {
-    const line = `${index + 1}. ${item.date} | ${item.type} | ${item.category} | ${formatMoney(item.amount)} | ${item.description}`;
-    pdf.text(line, 14, y);
-    y += 8;
-    if (y > 280) {
-      pdf.addPage();
-      y = 20;
+      closeModal(editMovementModal);
+      update();
+      showToast("Movimiento actualizado", "Los cambios se guardaron correctamente.", "success");
+    } catch (error) {
+      console.error(error);
+      showToast("Error", "No se pudo actualizar el movimiento.", "error");
     }
   });
+}
 
-  if (filtered.length === 0) {
-    pdf.text("No hay movimientos para exportar.", 14, y);
-  }
+if (searchInput) searchInput.addEventListener("input", update);
+if (filterType) filterType.addEventListener("change", update);
+if (filterCategory) filterCategory.addEventListener("change", update);
+if (filterStartDate) filterStartDate.addEventListener("change", update);
+if (filterEndDate) filterEndDate.addEventListener("change", update);
+if (sortOrder) sortOrder.addEventListener("change", update);
 
-  pdf.save("reporte-financiero.pdf");
-  showToast("PDF exportado", "Tu reporte fue descargado correctamente.", "success");
-});
+if (exportPdfBtn) {
+  exportPdfBtn.addEventListener("click", () => {
+    const filtered = getFilteredExpenses();
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+
+    pdf.setFontSize(16);
+    pdf.text("Reporte financiero - Cuida Tus Finanzas", 14, 18);
+
+    pdf.setFontSize(11);
+    pdf.text(`Usuario: ${userProfile.name || "Usuario"}`, 14, 28);
+    pdf.text(`Generado: ${new Date().toLocaleString()}`, 14, 35);
+
+    let y = 46;
+    filtered.forEach((item, index) => {
+      const line = `${index + 1}. ${item.date} | ${item.type} | ${item.category} | ${formatMoney(item.amount)} | ${item.description}`;
+      pdf.text(line, 14, y);
+      y += 8;
+      if (y > 280) {
+        pdf.addPage();
+        y = 20;
+      }
+    });
+
+    if (filtered.length === 0) {
+      pdf.text("No hay movimientos para exportar.", 14, y);
+    }
+
+    pdf.save("reporte-financiero.pdf");
+    showToast("PDF exportado", "Tu reporte fue descargado correctamente.", "success");
+  });
+}
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    authSection.classList.add("hidden");
-    appMain.classList.remove("hidden-app");
-    appMain.classList.add("visible-app");
+    if (authSection) authSection.classList.add("hidden");
+    if (appMain) {
+      appMain.classList.remove("hidden-app");
+      appMain.classList.add("visible-app");
+    }
 
-    logoutBtn.classList.remove("hidden");
-    editProfileBtn.classList.remove("hidden");
+    if (logoutBtn) logoutBtn.classList.remove("hidden");
+    if (editProfileBtn) editProfileBtn.classList.remove("hidden");
 
     await loadUserProfile(user);
     await loadData();
     activateTab("dashboard");
   } else {
-    authSection.classList.remove("hidden");
-    appMain.classList.remove("visible-app");
-    appMain.classList.add("hidden-app");
+    if (authSection) authSection.classList.remove("hidden");
+    if (appMain) {
+      appMain.classList.remove("visible-app");
+      appMain.classList.add("hidden-app");
+    }
 
-    logoutBtn.classList.add("hidden");
-    editProfileBtn.classList.add("hidden");
-    userInfo.textContent = "";
+    if (logoutBtn) logoutBtn.classList.add("hidden");
+    if (editProfileBtn) editProfileBtn.classList.add("hidden");
+    setText(userInfo, "");
 
     expenses = [];
     userProfile = {
@@ -911,7 +994,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   setTimeout(() => {
-    loadingScreen.classList.add("hidden");
+    if (loadingScreen) loadingScreen.classList.add("hidden");
     refreshChartsAppearance();
   }, 500);
 });
