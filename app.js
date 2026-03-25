@@ -22,6 +22,8 @@ import {
 ========================= */
 let expenses = [];
 let pendingDeleteId = null;
+let currentTutorialStep = 1;
+const totalTutorialSteps = 6;
 
 let userProfile = {
   name: "",
@@ -56,7 +58,8 @@ const DOM = {
     googleLoginBtn: document.getElementById("googleLoginBtn"),
     logoutBtn: document.getElementById("logoutBtn"),
     editProfileBtn: document.getElementById("editProfileBtn"),
-    themeToggleBtn: document.getElementById("themeToggleBtn")
+    themeToggleBtn: document.getElementById("themeToggleBtn"),
+    tutorialBtn: document.getElementById("tutorialBtn")
   },
 
   forms: {
@@ -98,7 +101,8 @@ const DOM = {
   modals: {
     profileModal: document.getElementById("profileModal"),
     editMovementModal: document.getElementById("editMovementModal"),
-    deleteModal: document.getElementById("deleteModal")
+    deleteModal: document.getElementById("deleteModal"),
+    tutorialModal: document.getElementById("tutorialModal")
   },
 
   profile: {
@@ -150,6 +154,15 @@ const DOM = {
   charts: {
     categoryCanvas: document.getElementById("categoryChart"),
     balanceCanvas: document.getElementById("balanceChart")
+  },
+
+  tutorial: {
+    floatingBtn: document.getElementById("tutorialFloatingBtn"),
+    stepIndicator: document.getElementById("tutorialStepIndicator"),
+    prevBtn: document.getElementById("tutorialPrevBtn"),
+    nextBtn: document.getElementById("tutorialNextBtn"),
+    finishBtn: document.getElementById("tutorialFinishBtn"),
+    steps: document.querySelectorAll(".tutorial-step")
   }
 };
 
@@ -286,6 +299,82 @@ function getThemeTextColor() {
       .getPropertyValue("--text")
       .trim() || "#fff"
   );
+}
+
+/* =========================
+   TUTORIAL
+========================= */
+function getTutorialStorageKey(user) {
+  return user ? `tutorial_seen_${user.uid}` : "tutorial_seen_guest";
+}
+
+function hasSeenTutorial(user) {
+  return localStorage.getItem(getTutorialStorageKey(user)) === "true";
+}
+
+function markTutorialAsSeen(user) {
+  localStorage.setItem(getTutorialStorageKey(user), "true");
+}
+
+function updateTutorialUI() {
+  if (!DOM.tutorial.steps.length) return;
+
+  DOM.tutorial.steps.forEach((step) => {
+    step.classList.toggle("active", Number(step.dataset.step) === currentTutorialStep);
+  });
+
+  setText(
+    DOM.tutorial.stepIndicator,
+    `Paso ${currentTutorialStep} de ${totalTutorialSteps}`
+  );
+
+  if (DOM.tutorial.prevBtn) {
+    DOM.tutorial.prevBtn.disabled = currentTutorialStep === 1;
+    DOM.tutorial.prevBtn.style.opacity = currentTutorialStep === 1 ? "0.5" : "1";
+    DOM.tutorial.prevBtn.style.pointerEvents = currentTutorialStep === 1 ? "none" : "auto";
+  }
+
+  if (DOM.tutorial.nextBtn) {
+    DOM.tutorial.nextBtn.classList.toggle("hidden", currentTutorialStep === totalTutorialSteps);
+  }
+
+  if (DOM.tutorial.finishBtn) {
+    DOM.tutorial.finishBtn.classList.toggle("hidden", currentTutorialStep !== totalTutorialSteps);
+  }
+}
+
+function openTutorial(step = 1) {
+  currentTutorialStep = step;
+  updateTutorialUI();
+  openModal(DOM.modals.tutorialModal);
+}
+
+function closeTutorial() {
+  markTutorialAsSeen(getCurrentUser());
+  closeModal(DOM.modals.tutorialModal);
+}
+
+function nextTutorialStep() {
+  if (currentTutorialStep < totalTutorialSteps) {
+    currentTutorialStep++;
+    updateTutorialUI();
+  }
+}
+
+function prevTutorialStep() {
+  if (currentTutorialStep > 1) {
+    currentTutorialStep--;
+    updateTutorialUI();
+  }
+}
+
+function maybeShowTutorialForFirstTime(user) {
+  if (!user) return;
+  if (hasSeenTutorial(user)) return;
+
+  setTimeout(() => {
+    openTutorial(1);
+  }, 700);
 }
 
 /* =========================
@@ -764,6 +853,7 @@ function renderTableHistory(filteredExpenses) {
         <button class="edit-btn" data-id="${e.id}">Editar</button>
         <button class="delete-btn" data-id="${e.id}">Borrar</button>
       </td>
+    </tr>
     `;
     DOM.history.expenseTableBody.appendChild(row);
   });
@@ -1082,12 +1172,21 @@ document.querySelectorAll(".bottom-nav-btn").forEach((btn) => {
 
 document.querySelectorAll("[data-close]").forEach((btn) => {
   btn.addEventListener("click", () => {
-    document.getElementById(btn.dataset.close)?.classList.add("hidden");
+    const modalId = btn.dataset.close;
+    if (modalId === "tutorialModal") {
+      closeTutorial();
+      return;
+    }
+    document.getElementById(modalId)?.classList.add("hidden");
   });
 });
 
 window.addEventListener("click", (e) => {
   if (e.target.classList.contains("modal-overlay")) {
+    if (e.target.id === "tutorialModal") {
+      closeTutorial();
+      return;
+    }
     e.target.classList.add("hidden");
   }
 });
@@ -1120,6 +1219,26 @@ if (DOM.auth.editProfileBtn) {
     }
     openModal(DOM.modals.profileModal);
   });
+}
+
+if (DOM.auth.tutorialBtn) {
+  DOM.auth.tutorialBtn.addEventListener("click", () => openTutorial(1));
+}
+
+if (DOM.tutorial.floatingBtn) {
+  DOM.tutorial.floatingBtn.addEventListener("click", () => openTutorial(1));
+}
+
+if (DOM.tutorial.prevBtn) {
+  DOM.tutorial.prevBtn.addEventListener("click", prevTutorialStep);
+}
+
+if (DOM.tutorial.nextBtn) {
+  DOM.tutorial.nextBtn.addEventListener("click", nextTutorialStep);
+}
+
+if (DOM.tutorial.finishBtn) {
+  DOM.tutorial.finishBtn.addEventListener("click", closeTutorial);
 }
 
 if (DOM.profile.saveProfileBtn) {
@@ -1167,10 +1286,13 @@ onAuthStateChanged(auth, async (user) => {
 
     DOM.auth.logoutBtn?.classList.remove("hidden");
     DOM.auth.editProfileBtn?.classList.remove("hidden");
+    DOM.auth.tutorialBtn?.classList.remove("hidden");
+    DOM.tutorial.floatingBtn?.classList.remove("hidden");
 
     await loadUserProfile(user);
     await loadData();
     activateTab("dashboard");
+    maybeShowTutorialForFirstTime(user);
   } else {
     showElement(DOM.authSection);
 
@@ -1181,7 +1303,10 @@ onAuthStateChanged(auth, async (user) => {
 
     DOM.auth.logoutBtn?.classList.add("hidden");
     DOM.auth.editProfileBtn?.classList.add("hidden");
+    DOM.auth.tutorialBtn?.classList.add("hidden");
+    DOM.tutorial.floatingBtn?.classList.add("hidden");
 
+    closeModal(DOM.modals.tutorialModal);
     setText(DOM.userInfo, "");
 
     expenses = [];
