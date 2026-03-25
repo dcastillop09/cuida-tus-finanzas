@@ -1,178 +1,492 @@
 <!DOCTYPE html>
 <html lang="es" data-theme="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cuida Tus Finanzas</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-
 <body>
+  <div id="toastContainer" class="toast-container"></div>
 
-<div id="toastContainer" class="toast-container"></div>
-
-<div id="loadingScreen" class="loading-screen">
-  <div class="loading-card">
-    <div class="loader-ring"></div>
-    <h2>Cuida Tus Finanzas</h2>
-    <p>Cargando tus datos...</p>
-  </div>
-</div>
-
-<header class="topbar">
-  <div class="brand">
-    <div class="brand-icon">💳</div>
-    <div>
-      <h1>Cuida Tus Finanzas</h1>
-      <p>Control inteligente de ingresos y gastos</p>
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loading-card">
+      <div class="loader-ring"></div>
+      <h2>Cuida Tus Finanzas</h2>
+      <p>Cargando tus datos...</p>
     </div>
   </div>
 
-  <div class="topbar-actions">
-    <span id="userInfo"></span>
-    <button id="themeToggleBtn">🌙</button>
-    <button id="tutorialBtn" class="hidden">Tutorial</button>
-    <button id="editProfileBtn" class="hidden">Perfil</button>
-    <button id="logoutBtn" class="hidden">Cerrar sesión</button>
-  </div>
-</header>
-
-<section id="authSection" class="auth-wrap">
-  <div class="auth-card">
-    <h2>Bienvenido</h2>
-    <input type="email" id="email" placeholder="Correo">
-    <input type="password" id="password" placeholder="Contraseña">
-
-    <button id="loginBtn">Ingresar</button>
-    <button id="registerBtn">Registrarse</button>
-    <button id="googleLoginBtn">Google</button>
-  </div>
-</section>
-
-<main id="appMain" class="hidden-app">
-
-<!-- =========================
-     REGISTRAR
-========================= -->
-<section id="register" class="tab-content">
-  <div class="section-header">
-    <h2>Registrar movimiento</h2>
-    <p>Agrega un ingreso o gasto rápidamente.</p>
-
-    <small class="form-hint">
-      Ejemplos: almuerzo, taxi, recarga, compra online, sueldo, pago recibido.
-      No importa si solo tienes una tarjeta, registra todo lo que gastas o recibes.
-    </small>
-  </div>
-
-  <form id="expenseForm">
-    <input type="date" id="date" required>
-
-    <select id="category">
-      <option>Comida</option>
-      <option>Transporte</option>
-      <option>Entretenimiento</option>
-      <option>Remuneración</option>
-      <option>Salud</option>
-      <option>Vivienda</option>
-    </select>
-
-    <input type="text" id="description" placeholder="Ej: Almuerzo, pasaje, recarga, sueldo" required>
-    <input type="number" id="amount" placeholder="Monto">
-
-    <select id="payment">
-      <option>Efectivo</option>
-      <option>Tarjeta</option>
-      <option>Transferencia</option>
-    </select>
-
-    <select id="type">
-      <option>Gasto</option>
-      <option>Ingreso</option>
-    </select>
-
-    <textarea id="notes" placeholder="Notas"></textarea>
-
-    <button type="submit">Guardar</button>
-  </form>
-</section>
-
-</main>
-
-<!-- =========================
-     BOTÓN TUTORIAL
-========================= -->
-<button id="tutorialFloatingBtn" class="tutorial-floating-btn hidden">?</button>
-
-<!-- =========================
-     MODAL TUTORIAL
-========================= -->
-<div id="tutorialModal" class="modal-overlay hidden">
-  <div class="modal-card tutorial-modal-card">
-
-    <div class="modal-head">
-      <h3>Guía rápida</h3>
-      <button data-close="tutorialModal">✕</button>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">💳</div>
+      <div>
+        <h1>Cuida Tus Finanzas</h1>
+        <p>Control inteligente de ingresos y gastos</p>
+      </div>
     </div>
 
-    <div class="tutorial-progress">
-      <span id="tutorialStepIndicator">Paso 1</span>
+    <div class="topbar-actions">
+      <span id="userInfo" class="user-info"></span>
+      <button id="themeToggleBtn" class="ghost-btn" title="Cambiar tema">🌙</button>
+      <button id="tutorialBtn" class="ghost-btn hidden">Tutorial</button>
+      <button id="editProfileBtn" class="ghost-btn hidden">Perfil</button>
+      <button id="logoutBtn" class="primary-btn hidden">Cerrar sesión</button>
     </div>
+  </header>
 
-    <div class="tutorial-body">
-
-      <div class="tutorial-step active" data-step="1">
-        <h4>Bienvenido</h4>
-        <p>Esta app te ayuda a controlar tu dinero registrando ingresos y gastos.</p>
+  <section id="authSection" class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-head">
+        <div class="auth-logo">💸</div>
+        <h2>Bienvenido</h2>
+        <p>Ingresa a tu cuenta para continuar</p>
       </div>
 
-      <div class="tutorial-step" data-step="2">
-        <h4>Resumen</h4>
-        <p>Aquí ves tu saldo y estadísticas.</p>
-      </div>
+      <div class="auth-form">
+        <input type="email" id="email" placeholder="Correo electrónico">
+        <input type="password" id="password" placeholder="Contraseña">
 
-      <div class="tutorial-step" data-step="3">
-        <h4>Registrar</h4>
-        <p>Aquí agregas tus movimientos.</p>
-      </div>
+        <div class="auth-buttons">
+          <button id="loginBtn" class="primary-btn">Ingresar</button>
+          <button id="registerBtn" class="secondary-btn">Registrarse</button>
+        </div>
 
-      <div class="tutorial-step" data-step="4">
-        <h4>Historial</h4>
-        <p>Revisa, edita y elimina movimientos.</p>
-      </div>
+        <div class="auth-divider"><span>o</span></div>
 
-      <div class="tutorial-step" data-step="5">
-        <h4>Tope</h4>
-        <p>Controla cuánto estás gastando.</p>
+        <button id="googleLoginBtn" class="google-btn">
+          <span>G</span> Continuar con Google
+        </button>
       </div>
-
-      <!-- 🔥 AQUÍ MEJORAMOS -->
-      <div class="tutorial-step" data-step="6">
-        <h4>¿Cómo empezar?</h4>
-        <p>
-          Puedes comenzar registrando algo simple como:
-          “almuerzo”, “pasaje”, “recarga”, “compra online” o “sueldo”.
-          No importa si tienes una sola tarjeta, lo importante es registrar tus movimientos diarios.
-        </p>
-      </div>
-
     </div>
+  </section>
 
-    <div class="tutorial-actions">
-      <button id="tutorialPrevBtn">Anterior</button>
-      <button id="tutorialNextBtn">Siguiente</button>
-      <button id="tutorialFinishBtn" class="hidden">Entendido</button>
+  <main id="appMain" class="app-shell hidden-app">
+    <nav class="main-nav desktop-nav">
+      <button class="nav-btn active" data-tab="dashboard">Resumen</button>
+      <button class="nav-btn" data-tab="register">Registrar</button>
+      <button class="nav-btn" data-tab="history">Historial</button>
+    </nav>
+
+    <section id="dashboard" class="tab-content active">
+      <div class="section-header">
+        <h2>Panel principal</h2>
+        <p>Vista general de tu situación financiera actual.</p>
+      </div>
+
+      <div class="summary-grid">
+        <article class="bank-card">
+          <span>Saldo disponible</span>
+          <strong id="balance">S/ 0.00</strong>
+        </article>
+
+        <article class="bank-card danger-card">
+          <span>Total gastos</span>
+          <strong id="totalExpenses">S/ 0.00</strong>
+        </article>
+
+        <article class="bank-card success-card">
+          <span>Total ingresos</span>
+          <strong id="totalIncome">S/ 0.00</strong>
+        </article>
+      </div>
+
+      <div class="dashboard-grid">
+        <section class="panel">
+          <div class="panel-head">
+            <h3>Tope de gastos</h3>
+            <span id="expenseLimitLabel">No configurado</span>
+          </div>
+
+          <div class="progress-bar">
+            <div id="limitProgress" class="progress-fill"></div>
+          </div>
+          <small id="limitProgressText">Configura un límite para monitorear tus gastos.</small>
+
+          <form id="limitForm" class="inline-form">
+            <input type="number" id="expenseLimitInput" min="0" step="0.01" placeholder="Ej: 400.00">
+            <button type="submit" class="primary-btn">Guardar</button>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h3>Comparativa mensual</h3>
+            <span id="monthlyTrendBadge" class="trend-badge neutral">Sin datos</span>
+          </div>
+
+          <div class="monthly-stats">
+            <div>
+              <span>Mes actual</span>
+              <strong id="currentMonthExpense">S/ 0.00</strong>
+            </div>
+            <div>
+              <span>Mes anterior</span>
+              <strong id="previousMonthExpense">S/ 0.00</strong>
+            </div>
+            <div>
+              <span>Diferencia</span>
+              <strong id="monthlyDifference">S/ 0.00</strong>
+            </div>
+          </div>
+
+          <div class="comparison-bar">
+            <div id="comparisonCurrentBar" class="comparison-current"></div>
+          </div>
+          <small id="comparisonText">Aún no hay suficiente información para comparar.</small>
+        </section>
+      </div>
+
+      <div class="dashboard-grid second-row">
+        <section class="panel quick-panel">
+          <div class="panel-head">
+            <h3>Resumen rápido</h3>
+          </div>
+
+          <div class="quick-stats">
+            <div class="quick-item">
+              <span>Gasto más alto</span>
+              <strong id="highestExpense">S/ 0.00</strong>
+            </div>
+            <div class="quick-item">
+              <span>Categoría más usada</span>
+              <strong id="topCategory">-</strong>
+            </div>
+            <div class="quick-item">
+              <span>Último movimiento</span>
+              <strong id="lastMovement">-</strong>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="charts-grid">
+        <section class="panel chart-panel">
+          <h3>Distribución de gastos</h3>
+          <canvas id="categoryChart"></canvas>
+        </section>
+
+        <section class="panel chart-panel">
+          <h3>Saldo acumulado</h3>
+          <canvas id="balanceChart"></canvas>
+        </section>
+      </div>
+    </section>
+
+    <section id="register" class="tab-content">
+      <div class="section-header">
+        <h2>Registrar movimiento</h2>
+        <p>Agrega un ingreso o gasto rápidamente.</p>
+        <small class="form-hint">
+          Ejemplos: almuerzo, taxi, recarga, compra online, sueldo, pago recibido.
+          No importa si solo tienes una tarjeta, registra todo lo que gastas o recibes.
+        </small>
+      </div>
+
+      <form id="expenseForm" class="movement-form panel">
+        <input type="date" id="date" required>
+
+        <select id="category" required>
+          <option value="" disabled selected>Selecciona categoría</option>
+          <option>Comida</option>
+          <option>Transporte</option>
+          <option>Entretenimiento</option>
+          <option>Remuneración</option>
+          <option>Salud</option>
+          <option>Vivienda</option>
+        </select>
+
+        <input type="text" id="description" placeholder="Ej: Almuerzo, pasaje, recarga, sueldo" required>
+        <input type="number" id="amount" step="0.01" min="0" placeholder="Monto" required>
+
+        <select id="payment" required>
+          <option>Efectivo</option>
+          <option>Tarjeta</option>
+          <option>Transferencia</option>
+        </select>
+
+        <select id="type" required>
+          <option>Gasto</option>
+          <option>Ingreso</option>
+        </select>
+
+        <textarea id="notes" placeholder="Observaciones (opcional)"></textarea>
+
+        <button type="submit" id="submitMovementBtn" class="primary-btn">Agregar movimiento</button>
+      </form>
+    </section>
+
+    <section id="history" class="tab-content">
+      <div class="section-header">
+        <h2>Historial</h2>
+        <p>Busca, filtra, ordena, edita, elimina y exporta.</p>
+      </div>
+
+      <div class="mobile-filter-toggle-wrap">
+        <button id="toggleFiltersBtn" type="button" class="ghost-btn mobile-filter-toggle">
+          Filtros
+        </button>
+      </div>
+
+      <div id="historyFilters" class="history-tools panel">
+        <input type="text" id="searchInput" placeholder="Buscar...">
+        <select id="filterType">
+          <option value="">Todos los tipos</option>
+          <option value="Gasto">Gastos</option>
+          <option value="Ingreso">Ingresos</option>
+        </select>
+
+        <select id="filterCategory">
+          <option value="">Todas las categorías</option>
+          <option>Comida</option>
+          <option>Transporte</option>
+          <option>Entretenimiento</option>
+          <option>Remuneración</option>
+          <option>Salud</option>
+          <option>Vivienda</option>
+        </select>
+
+        <input type="date" id="filterStartDate">
+        <input type="date" id="filterEndDate">
+
+        <select id="sortOrder">
+          <option value="newest">Más reciente</option>
+          <option value="oldest">Más antiguo</option>
+          <option value="highest">Monto más alto</option>
+          <option value="lowest">Monto más bajo</option>
+        </select>
+
+        <button id="exportPdfBtn" type="button" class="primary-btn">Exportar PDF</button>
+      </div>
+
+      <div class="table-panel panel desktop-history">
+        <table id="expenseTable">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Categoría</th>
+              <th>Descripción</th>
+              <th>Monto</th>
+              <th>Pago</th>
+              <th>Tipo</th>
+              <th>Notas</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <div id="emptyState" class="empty-state hidden">
+          <h3>No hay movimientos</h3>
+          <p>Empieza registrando tu primer ingreso o gasto.</p>
+        </div>
+      </div>
+
+      <div id="mobileHistoryList" class="mobile-history-list"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="bottom-nav-btn active" data-tab="dashboard">
+      <span>🏠</span>
+      <small>Resumen</small>
+    </button>
+    <button class="bottom-nav-btn" data-tab="register">
+      <span>➕</span>
+      <small>Registrar</small>
+    </button>
+    <button class="bottom-nav-btn" data-tab="history">
+      <span>📋</span>
+      <small>Historial</small>
+    </button>
+  </nav>
+
+  <footer class="site-footer">
+    <div class="footer-card">
+      <h3>Gracias por usar esta app</h3>
+      <p>
+        Esta aplicación fue creada por <strong>Diego Castillo P.</strong>.
+        Esperamos que sea de gran utilidad para un mejor control financiero.
+      </p>
+      <p>
+        Si deseas apoyar económicamente futuras mejoras:
+        <strong>946703630</strong>
+      </p>
+      <small>Hecho por Diego Castillo P. • Gracias a todos por usar el app 💚</small>
     </div>
+  </footer>
 
+  <div id="profileModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Editar perfil</h3>
+        <button class="close-btn" data-close="profileModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Nombre visible</label>
+        <input type="text" id="profileNameInput" placeholder="Ej: Diego">
+
+        <label>Tope mensual de gastos</label>
+        <input type="number" id="profileLimitInput" min="0" step="0.01" placeholder="Ej: 400.00">
+      </div>
+      <div class="modal-actions">
+        <button id="saveProfileBtn" class="primary-btn">Guardar cambios</button>
+      </div>
+    </div>
   </div>
-</div>
 
-<script type="module" src="app.js"></script>
+  <div id="editMovementModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3>Editar movimiento</h3>
+        <button class="close-btn" data-close="editMovementModal">✕</button>
+      </div>
 
+      <form id="editMovementForm" class="modal-body">
+        <input type="hidden" id="editId">
+
+        <label>Fecha</label>
+        <input type="date" id="editDate" required>
+
+        <label>Categoría</label>
+        <select id="editCategory" required>
+          <option>Comida</option>
+          <option>Transporte</option>
+          <option>Entretenimiento</option>
+          <option>Remuneración</option>
+          <option>Salud</option>
+          <option>Vivienda</option>
+        </select>
+
+        <label>Descripción</label>
+        <input type="text" id="editDescription" required>
+
+        <label>Monto</label>
+        <input type="number" id="editAmount" min="0" step="0.01" required>
+
+        <label>Pago</label>
+        <select id="editPayment" required>
+          <option>Efectivo</option>
+          <option>Tarjeta</option>
+          <option>Transferencia</option>
+        </select>
+
+        <label>Tipo</label>
+        <select id="editType" required>
+          <option>Gasto</option>
+          <option>Ingreso</option>
+        </select>
+
+        <label>Notas</label>
+        <textarea id="editNotes"></textarea>
+
+        <div class="modal-actions">
+          <button type="submit" class="primary-btn">Guardar edición</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="deleteModal" class="modal-overlay hidden">
+    <div class="modal-card small-modal">
+      <div class="modal-head">
+        <h3>Eliminar movimiento</h3>
+        <button class="close-btn" data-close="deleteModal">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>¿Seguro que deseas eliminar este movimiento?</p>
+      </div>
+      <div class="modal-actions">
+        <button id="cancelDeleteBtn" class="secondary-btn">Cancelar</button>
+        <button id="confirmDeleteBtn" class="danger-btn">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <button id="tutorialFloatingBtn" class="tutorial-floating-btn hidden" title="Ver tutorial otra vez">
+    ?
+  </button>
+
+  <div id="tutorialModal" class="modal-overlay hidden">
+    <div class="modal-card tutorial-modal-card">
+      <div class="modal-head">
+        <h3>Guía rápida de uso</h3>
+        <button class="close-btn" data-close="tutorialModal">✕</button>
+      </div>
+
+      <div class="tutorial-progress">
+        <span id="tutorialStepIndicator">Paso 1 de 6</span>
+      </div>
+
+      <div class="tutorial-body">
+        <div class="tutorial-step active" data-step="1">
+          <div class="tutorial-icon">👋</div>
+          <h4>Bienvenido a Cuida Tus Finanzas</h4>
+          <p>
+            Esta app te ayuda a registrar tus ingresos y gastos para que puedas
+            entender mejor cómo manejas tu dinero.
+          </p>
+        </div>
+
+        <div class="tutorial-step" data-step="2">
+          <div class="tutorial-icon">📊</div>
+          <h4>Sección Resumen</h4>
+          <p>
+            Aquí verás tu saldo disponible, total de gastos, total de ingresos,
+            gráficos y datos rápidos sobre tu situación financiera.
+          </p>
+        </div>
+
+        <div class="tutorial-step" data-step="3">
+          <div class="tutorial-icon">➕</div>
+          <h4>Sección Registrar</h4>
+          <p>
+            En esta parte puedes agregar un movimiento nuevo indicando fecha,
+            categoría, descripción, monto, tipo de pago y si es ingreso o gasto.
+          </p>
+        </div>
+
+        <div class="tutorial-step" data-step="4">
+          <div class="tutorial-icon">📋</div>
+          <h4>Sección Historial</h4>
+          <p>
+            Aquí podrás ver todos tus movimientos, buscarlos, filtrarlos,
+            ordenarlos, editarlos, eliminarlos y exportarlos en PDF.
+          </p>
+        </div>
+
+        <div class="tutorial-step" data-step="5">
+          <div class="tutorial-icon">🎯</div>
+          <h4>Tope de gastos</h4>
+          <p>
+            Puedes configurar un límite de gastos para monitorear cuánto llevas
+            consumido y tener mayor control de tu presupuesto.
+          </p>
+        </div>
+
+        <div class="tutorial-step" data-step="6">
+          <div class="tutorial-icon">🚀</div>
+          <h4>¿Cómo empezar?</h4>
+          <p>
+            Puedes comenzar registrando algo simple como:
+            “almuerzo”, “pasaje”, “recarga”, “compra online” o “sueldo”.
+            No importa si tienes una sola tarjeta, lo importante es registrar tus movimientos diarios.
+          </p>
+        </div>
+      </div>
+
+      <div class="tutorial-actions">
+        <button id="tutorialPrevBtn" class="secondary-btn" type="button">Anterior</button>
+        <button id="tutorialNextBtn" class="primary-btn" type="button">Siguiente</button>
+        <button id="tutorialFinishBtn" class="primary-btn hidden" type="button">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
