@@ -948,3 +948,185 @@ select option {
     border-radius: 18px;
   }
 }
+
+/* =========================
+   TUTORIAL
+========================= */
+
+.tutorial-modal-card {
+  width: min(100%, 560px);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.tutorial-progress {
+  padding: 0 18px 8px;
+}
+
+.tutorial-progress span {
+  display: inline-block;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.tutorial-body {
+  padding: 6px 18px 12px;
+  min-height: 290px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tutorial-step {
+  display: none;
+  text-align: center;
+  width: 100%;
+  animation: tutorialFade 0.28s ease;
+}
+
+.tutorial-step.active {
+  display: block;
+}
+
+.tutorial-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+
+.tutorial-step h4 {
+  margin: 0 0 10px;
+  font-size: 1.35rem;
+}
+
+.tutorial-step p {
+  margin: 0 auto;
+  max-width: 420px;
+  color: var(--muted);
+  line-height: 1.7;
+  font-size: 0.98rem;
+}
+
+.tutorial-actions {
+  padding: 0 18px 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tutorial-actions button {
+  min-width: 120px;
+}
+
+.tutorial-floating-btn {
+  position: fixed;
+  right: 18px;
+  bottom: 92px;
+  z-index: 45;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #06261c;
+  font-family: inherit;
+  font-size: 1.35rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 18px 30px rgba(0, 0, 0, 0.28);
+  transition: 0.25s ease;
+}
+
+.tutorial-floating-btn:hover {
+  transform: translateY(-2px) scale(1.04);
+}
+
+.tutorial-floating-btn:active {
+  transform: scale(0.97);
+}
+
+@keyframes tutorialFade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================
+   RESPONSIVE TUTORIAL
+========================= */
+
+@media (max-width: 768px) {
+  .tutorial-modal-card {
+    width: min(100%, 96vw);
+    border-radius: 20px;
+  }
+
+  .tutorial-progress {
+    padding: 0 16px 6px;
+  }
+
+  .tutorial-body {
+    min-height: 250px;
+    padding: 4px 16px 10px;
+  }
+
+  .tutorial-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+  }
+
+  .tutorial-step h4 {
+    font-size: 1.15rem;
+  }
+
+  .tutorial-step p {
+    font-size: 0.93rem;
+    line-height: 1.6;
+  }
+
+  .tutorial-actions {
+    padding: 0 16px 16px;
+  }
+
+  .tutorial-actions button {
+    flex: 1 1 30%;
+    min-width: unset;
+  }
+
+  .tutorial-floating-btn {
+    right: 14px;
+    bottom: 84px;
+    width: 52px;
+    height: 52px;
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tutorial-body {
+    min-height: 230px;
+  }
+
+  .tutorial-step h4 {
+    font-size: 1.02rem;
+  }
+
+  .tutorial-step p {
+    font-size: 0.9rem;
+  }
+
+  .tutorial-actions {
+    flex-direction: column;
+  }
+
+  .tutorial-actions button {
+    width: 100%;
+  }
+}
