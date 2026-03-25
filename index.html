@@ -33,6 +33,7 @@
     <div class="topbar-actions">
       <span id="userInfo" class="user-info"></span>
       <button id="themeToggleBtn" class="ghost-btn" title="Cambiar tema">🌙</button>
+      <button id="tutorialBtn" class="ghost-btn hidden">Tutorial</button>
       <button id="editProfileBtn" class="ghost-btn hidden">Perfil</button>
       <button id="logoutBtn" class="primary-btn hidden">Cerrar sesión</button>
     </div>
@@ -398,6 +399,87 @@
       <div class="modal-actions">
         <button id="cancelDeleteBtn" class="secondary-btn">Cancelar</button>
         <button id="confirmDeleteBtn" class="danger-btn">Eliminar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTÓN FLOTANTE PARA VOLVER A VER EL TUTORIAL -->
+  <button id="tutorialFloatingBtn" class="tutorial-floating-btn hidden" title="Ver tutorial otra vez">
+    ?
+  </button>
+
+  <!-- MODAL DEL TUTORIAL -->
+  <div id="tutorialModal" class="modal-overlay hidden">
+    <div class="modal-card tutorial-modal-card">
+      <div class="modal-head">
+        <h3>Guía rápida de uso</h3>
+        <button class="close-btn" data-close="tutorialModal">✕</button>
+      </div>
+
+      <div class="tutorial-progress">
+        <span id="tutorialStepIndicator">Paso 1 de 6</span>
+      </div>
+
+      <div class="tutorial-body">
+        <div class="tutorial-step active" data-step="1">
+          <div class="tutorial-icon">👋</div>
+          <h4>Bienvenido a Cuida Tus Finanzas</h4>
+          <p>
+            Esta app te ayuda a registrar tus ingresos y gastos para que puedas
+            entender mejor cómo manejas tu dinero.
+          </p>
+        </div>
+
+        <div class="tutorial-step" data-step="2">
+          <div class="tutorial-icon">📊</div>
+          <h4>Sección Resumen</h4>
+          <p>
+            Aquí verás tu saldo disponible, total de gastos, total de ingresos,
+            gráficos y datos rápidos sobre tu situación financiera.
+          </p>
+        </div>
+
+        <div class="tutorial-step" data-step="3">
+          <div class="tutorial-icon">➕</div>
+          <h4>Sección Registrar</h4>
+          <p>
+            En esta parte puedes agregar un movimiento nuevo indicando fecha,
+            categoría, descripción, monto, tipo de pago y si es ingreso o gasto.
+          </p>
+        </div>
+
+        <div class="tutorial-step" data-step="4">
+          <div class="tutorial-icon">📋</div>
+          <h4>Sección Historial</h4>
+          <p>
+            Aquí podrás ver todos tus movimientos, buscarlos, filtrarlos,
+            ordenarlos, editarlos, eliminarlos y exportarlos en PDF.
+          </p>
+        </div>
+
+        <div class="tutorial-step" data-step="5">
+          <div class="tutorial-icon">🎯</div>
+          <h4>Tope de gastos</h4>
+          <p>
+            Puedes configurar un límite de gastos para monitorear cuánto llevas
+            consumido y tener mayor control de tu presupuesto.
+          </p>
+        </div>
+
+        <div class="tutorial-step" data-step="6">
+          <div class="tutorial-icon">🚀</div>
+          <h4>¿Cómo empezar?</h4>
+          <p>
+            Lo mejor es comenzar registrando tu primer ingreso o gasto. Luego
+            podrás revisar tu resumen y analizar tu historial con más claridad.
+          </p>
+        </div>
+      </div>
+
+      <div class="tutorial-actions">
+        <button id="tutorialPrevBtn" class="secondary-btn" type="button">Anterior</button>
+        <button id="tutorialNextBtn" class="primary-btn" type="button">Siguiente</button>
+        <button id="tutorialFinishBtn" class="primary-btn hidden" type="button">Entendido</button>
       </div>
     </div>
   </div>
