@@ -124,9 +124,14 @@ function applyTheme(theme) {
 themeToggleBtn.addEventListener("click", () => {
   const current = document.documentElement.getAttribute("data-theme") || "dark";
   applyTheme(current === "dark" ? "light" : "dark");
+  refreshChartsAppearance();
 });
 
 applyTheme(localStorage.getItem("theme") || "dark");
+
+function getThemeTextColor() {
+  return getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#fff";
+}
 
 let categoryChart = new Chart(categoryChartCtx, {
   type: "doughnut",
@@ -140,7 +145,7 @@ let categoryChart = new Chart(categoryChartCtx, {
     plugins: {
       legend: {
         position: "bottom",
-        labels: { color: getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#fff" }
+        labels: { color: getThemeTextColor() }
       }
     }
   }
@@ -165,19 +170,35 @@ let balanceChart = new Chart(balanceChartCtx, {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        labels: { color: getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#fff" }
+        labels: { color: getThemeTextColor() }
       }
     },
     scales: {
       x: {
-        ticks: { color: getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#fff" }
+        ticks: { color: getThemeTextColor() }
       },
       y: {
-        ticks: { color: getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#fff" }
+        ticks: { color: getThemeTextColor() }
       }
     }
   }
 });
+
+function refreshChartsAppearance() {
+  const color = getThemeTextColor();
+
+  categoryChart.options.plugins.legend.labels.color = color;
+  balanceChart.options.plugins.legend.labels.color = color;
+  balanceChart.options.scales.x.ticks.color = color;
+  balanceChart.options.scales.y.ticks.color = color;
+
+  setTimeout(() => {
+    categoryChart.resize();
+    categoryChart.update();
+    balanceChart.resize();
+    balanceChart.update();
+  }, 100);
+}
 
 document.querySelectorAll(".nav-btn").forEach(btn => {
   btn.addEventListener("click", () => activateTab(btn.dataset.tab));
@@ -189,6 +210,13 @@ function activateTab(tabId) {
 
   document.querySelectorAll(".tab-content").forEach(section => section.classList.remove("active"));
   document.getElementById(tabId)?.classList.add("active");
+
+  setTimeout(() => {
+    categoryChart.resize();
+    categoryChart.update();
+    balanceChart.resize();
+    balanceChart.update();
+  }, 150);
 }
 
 function openModal(modal) {
@@ -558,15 +586,20 @@ function update() {
   categoryChart.data.labels = labels;
   categoryChart.data.datasets[0].data = Object.values(categoryTotals);
   categoryChart.data.datasets[0].backgroundColor = labels.map(label => categoryColors[label] || "#ccc");
-  categoryChart.update();
 
   balanceChart.data.labels = balanceTimeline.map(item => item.date);
   balanceChart.data.datasets[0].data = balanceTimeline.map(item => item.balance);
-  balanceChart.update();
 
   updateLimitUI(totalExpenses);
   updateMonthlyComparison();
   bindActionButtons();
+
+  setTimeout(() => {
+    categoryChart.resize();
+    categoryChart.update();
+    balanceChart.resize();
+    balanceChart.update();
+  }, 100);
 }
 
 function updateLimitUI(totalExpensesParam = null) {
@@ -801,5 +834,6 @@ onAuthStateChanged(auth, async (user) => {
 
   setTimeout(() => {
     loadingScreen.classList.add("hidden");
+    refreshChartsAppearance();
   }, 500);
 });
