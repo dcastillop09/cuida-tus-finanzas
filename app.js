@@ -153,7 +153,8 @@ const DOM = {
 
   charts: {
     categoryCanvas: document.getElementById("categoryChart"),
-    balanceCanvas: document.getElementById("balanceChart")
+    balanceCanvas: document.getElementById("balanceChart"),
+    barCanvas: document.getElementById("barChart")
   },
 
   tutorial: {
@@ -172,6 +173,10 @@ DOM.charts.categoryCtx = DOM.charts.categoryCanvas
 
 DOM.charts.balanceCtx = DOM.charts.balanceCanvas
   ? DOM.charts.balanceCanvas.getContext("2d")
+  : null;
+
+DOM.charts.barCtx = DOM.charts.barCanvas
+  ? DOM.charts.barCanvas.getContext("2d")
   : null;
 
 /* =========================
@@ -294,11 +299,9 @@ function closeModal(modal) {
 }
 
 function getThemeTextColor() {
-  return (
-    getComputedStyle(document.documentElement)
-      .getPropertyValue("--text")
-      .trim() || "#fff"
-  );
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue("--text")
+    .trim() || "#fff";
 }
 
 /* =========================
@@ -323,10 +326,7 @@ function updateTutorialUI() {
     step.classList.toggle("active", Number(step.dataset.step) === currentTutorialStep);
   });
 
-  setText(
-    DOM.tutorial.stepIndicator,
-    `Paso ${currentTutorialStep} de ${totalTutorialSteps}`
-  );
+  setText(DOM.tutorial.stepIndicator, `Paso ${currentTutorialStep} de ${totalTutorialSteps}`);
 
   if (DOM.tutorial.prevBtn) {
     DOM.tutorial.prevBtn.disabled = currentTutorialStep === 1;
@@ -355,12 +355,9 @@ function closeTutorial() {
   markTutorialAsSeen(user);
   closeModal(DOM.modals.tutorialModal);
 
-  // 🔥 MEJORA UX: si no tiene movimientos, lo mandamos a registrar
   if (expenses.length === 0) {
     setTimeout(() => {
       activateTab("register");
-
-      // enfocar descripción para guiarlo
       if (DOM.movement.description) {
         DOM.movement.description.focus();
       }
@@ -416,9 +413,15 @@ function refreshChartsAppearance() {
     balanceChart.options.scales.y.ticks.color = color;
   }
 
+  if (barChart) {
+    barChart.options.scales.x.ticks.color = color;
+    barChart.options.scales.y.ticks.color = color;
+  }
+
   setTimeout(() => {
     safeResizeUpdateChart(categoryChart);
     safeResizeUpdateChart(balanceChart);
+    safeResizeUpdateChart(barChart);
   }, 100);
 }
 
@@ -485,6 +488,40 @@ let balanceChart = DOM.charts.balanceCtx
     })
   : null;
 
+let barChart = DOM.charts.barCtx
+  ? new Chart(DOM.charts.barCtx, {
+      type: "bar",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "Gastos",
+            data: [],
+            borderRadius: 8
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: getThemeTextColor() }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: { color: getThemeTextColor() }
+          }
+        }
+      }
+    })
+  : null;
+
 /* =========================
    NAVEGACIÓN Y MODALES
 ========================= */
@@ -510,6 +547,7 @@ function activateTab(tabId) {
   setTimeout(() => {
     safeResizeUpdateChart(categoryChart);
     safeResizeUpdateChart(balanceChart);
+    safeResizeUpdateChart(barChart);
   }, 150);
 }
 
@@ -867,7 +905,6 @@ function renderTableHistory(filteredExpenses) {
         <button class="edit-btn" data-id="${e.id}">Editar</button>
         <button class="delete-btn" data-id="${e.id}">Borrar</button>
       </td>
-    </tr>
     `;
     DOM.history.expenseTableBody.appendChild(row);
   });
@@ -972,6 +1009,14 @@ function updateCharts(categoryTotals, balanceTimeline) {
     balanceChart.data.labels = balanceTimeline.map((item) => item.date);
     balanceChart.data.datasets[0].data = balanceTimeline.map((item) => item.balance);
   }
+
+  if (barChart) {
+    barChart.data.labels = labels;
+    barChart.data.datasets[0].data = Object.values(categoryTotals);
+    barChart.data.datasets[0].backgroundColor = labels.map(
+      (label) => categoryColors[label] || "#999"
+    );
+  }
 }
 
 function bindActionButtons() {
@@ -1025,6 +1070,7 @@ function update() {
   setTimeout(() => {
     safeResizeUpdateChart(categoryChart);
     safeResizeUpdateChart(balanceChart);
+    safeResizeUpdateChart(barChart);
   }, 100);
 }
 
