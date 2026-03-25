@@ -57,9 +57,12 @@ const filterStartDate = document.getElementById("filterStartDate");
 const filterEndDate = document.getElementById("filterEndDate");
 const sortOrder = document.getElementById("sortOrder");
 const exportPdfBtn = document.getElementById("exportPdfBtn");
+const toggleFiltersBtn = document.getElementById("toggleFiltersBtn");
+const historyFilters = document.getElementById("historyFilters");
 
 const expenseTableBody = document.querySelector("#expenseTable tbody");
 const emptyState = document.getElementById("emptyState");
+const mobileHistoryList = document.getElementById("mobileHistoryList");
 
 const profileModal = document.getElementById("profileModal");
 const editMovementModal = document.getElementById("editMovementModal");
@@ -175,12 +178,8 @@ let balanceChart = new Chart(balanceChartCtx, {
       }
     },
     scales: {
-      x: {
-        ticks: { color: getThemeTextColor() }
-      },
-      y: {
-        ticks: { color: getThemeTextColor() }
-      }
+      x: { ticks: { color: getThemeTextColor() } },
+      y: { ticks: { color: getThemeTextColor() } }
     }
   }
 });
@@ -201,13 +200,26 @@ function refreshChartsAppearance() {
   }, 100);
 }
 
+function setActiveNav(tabId) {
+  document.querySelectorAll(".nav-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.tab === tabId);
+  });
+
+  document.querySelectorAll(".bottom-nav-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.tab === tabId);
+  });
+}
+
 document.querySelectorAll(".nav-btn").forEach(btn => {
   btn.addEventListener("click", () => activateTab(btn.dataset.tab));
 });
 
+document.querySelectorAll(".bottom-nav-btn").forEach(btn => {
+  btn.addEventListener("click", () => activateTab(btn.dataset.tab));
+});
+
 function activateTab(tabId) {
-  document.querySelectorAll(".nav-btn").forEach(btn => btn.classList.remove("active"));
-  document.querySelector(`.nav-btn[data-tab="${tabId}"]`)?.classList.add("active");
+  setActiveNav(tabId);
 
   document.querySelectorAll(".tab-content").forEach(section => section.classList.remove("active"));
   document.getElementById(tabId)?.classList.add("active");
@@ -244,6 +256,12 @@ cancelDeleteBtn.addEventListener("click", () => {
   pendingDeleteId = null;
   closeModal(deleteModal);
 });
+
+if (toggleFiltersBtn) {
+  toggleFiltersBtn.addEventListener("click", () => {
+    historyFilters.classList.toggle("show");
+  });
+}
 
 registerBtn.addEventListener("click", async () => {
   const email = document.getElementById("email").value.trim();
@@ -519,6 +537,65 @@ function getFilteredExpenses() {
   return filtered;
 }
 
+function renderMobileHistory(filteredExpenses) {
+  mobileHistoryList.innerHTML = "";
+
+  if (filteredExpenses.length === 0) {
+    mobileHistoryList.innerHTML = `
+      <div class="mobile-history-card">
+        <div class="empty-state">
+          <h3>No hay movimientos</h3>
+          <p>Empieza registrando tu primer ingreso o gasto.</p>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  filteredExpenses.forEach((e) => {
+    const card = document.createElement("div");
+    card.className = "mobile-history-card";
+
+    card.innerHTML = `
+      <div class="mobile-history-top">
+        <div>
+          <div class="mobile-history-category" style="color:${categoryColors[e.category] || "#fff"};">${e.category}</div>
+          <div class="mobile-history-date">${e.date}</div>
+        </div>
+        <div class="mobile-history-amount">${formatMoney(e.amount)}</div>
+      </div>
+
+      <div class="mobile-history-desc">${e.description}</div>
+
+      <div class="mobile-history-meta">
+        <span><strong>Tipo:</strong> ${e.type}</span>
+        <span><strong>Pago:</strong> ${e.payment}</span>
+        <span><strong>Notas:</strong> ${e.notes || "-"}</span>
+      </div>
+
+      <div class="mobile-history-actions">
+        <button class="mobile-action-btn edit" data-id="${e.id}">Editar</button>
+        <button class="mobile-action-btn delete" data-id="${e.id}">Borrar</button>
+      </div>
+    `;
+
+    mobileHistoryList.appendChild(card);
+  });
+
+  document.querySelectorAll(".mobile-action-btn.edit").forEach(btn => {
+    btn.addEventListener("click", () => {
+      openEditMovement(btn.dataset.id);
+    });
+  });
+
+  document.querySelectorAll(".mobile-action-btn.delete").forEach(btn => {
+    btn.addEventListener("click", () => {
+      pendingDeleteId = btn.dataset.id;
+      openModal(deleteModal);
+    });
+  });
+}
+
 function update() {
   let totalExpenses = 0;
   let totalIncome = 0;
@@ -563,6 +640,8 @@ function update() {
     `;
     expenseTableBody.appendChild(row);
   });
+
+  renderMobileHistory(filteredExpenses);
 
   emptyState.classList.toggle("hidden", filteredExpenses.length !== 0);
 
