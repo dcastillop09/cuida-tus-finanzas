@@ -65,7 +65,7 @@
   </section>
 
   <main id="appMain" class="app-shell hidden-app">
-    <nav class="main-nav">
+    <nav class="main-nav desktop-nav">
       <button class="nav-btn active" data-tab="dashboard">Resumen</button>
       <button class="nav-btn" data-tab="register">Registrar</button>
       <button class="nav-btn" data-tab="history">Historial</button>
@@ -221,7 +221,13 @@
         <p>Busca, filtra, ordena, edita, elimina y exporta.</p>
       </div>
 
-      <div class="history-tools panel">
+      <div class="mobile-filter-toggle-wrap">
+        <button id="toggleFiltersBtn" type="button" class="ghost-btn mobile-filter-toggle">
+          Filtros
+        </button>
+      </div>
+
+      <div id="historyFilters" class="history-tools panel">
         <input type="text" id="searchInput" placeholder="Buscar...">
         <select id="filterType">
           <option value="">Todos los tipos</option>
@@ -252,7 +258,7 @@
         <button id="exportPdfBtn" type="button" class="primary-btn">Exportar PDF</button>
       </div>
 
-      <div class="table-panel panel">
+      <div class="table-panel panel desktop-history">
         <table id="expenseTable">
           <thead>
             <tr>
@@ -274,8 +280,25 @@
           <p>Empieza registrando tu primer ingreso o gasto.</p>
         </div>
       </div>
+
+      <div id="mobileHistoryList" class="mobile-history-list"></div>
     </section>
   </main>
+
+  <nav class="bottom-nav">
+    <button class="bottom-nav-btn active" data-tab="dashboard">
+      <span>🏠</span>
+      <small>Resumen</small>
+    </button>
+    <button class="bottom-nav-btn" data-tab="register">
+      <span>➕</span>
+      <small>Registrar</small>
+    </button>
+    <button class="bottom-nav-btn" data-tab="history">
+      <span>📋</span>
+      <small>Historial</small>
+    </button>
+  </nav>
 
   <footer class="site-footer">
     <div class="footer-card">
