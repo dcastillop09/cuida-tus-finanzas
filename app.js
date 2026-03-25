@@ -17,6 +17,9 @@ import {
   updateDoc
 } from "./firebase.js";
 
+/* =========================
+   ESTADO GLOBAL
+========================= */
 let expenses = [];
 let pendingDeleteId = null;
 
@@ -25,78 +28,142 @@ let userProfile = {
   expenseLimit: 0
 };
 
-const categoryColors = {
-  "Comida": "#8e44ad",
-  "Transporte": "#e74c3c",
-  "Entretenimiento": "#e67e22",
-  "Remuneración": "#3498db",
-  "Salud": "#2ecc71",
-  "Vivienda": "#f1c40f"
-};
-
 const currency = "S/";
 
-const loadingScreen = document.getElementById("loadingScreen");
-const appMain = document.getElementById("appMain");
-const authSection = document.getElementById("authSection");
-const userInfo = document.getElementById("userInfo");
+const categoryColors = {
+  Comida: "#8e44ad",
+  Transporte: "#e74c3c",
+  Entretenimiento: "#e67e22",
+  Remuneración: "#3498db",
+  Salud: "#2ecc71",
+  Vivienda: "#f1c40f"
+};
 
-const registerBtn = document.getElementById("registerBtn");
-const loginBtn = document.getElementById("loginBtn");
-const googleLoginBtn = document.getElementById("googleLoginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-const editProfileBtn = document.getElementById("editProfileBtn");
-const themeToggleBtn = document.getElementById("themeToggleBtn");
+/* =========================
+   DOM
+========================= */
+const DOM = {
+  loadingScreen: document.getElementById("loadingScreen"),
+  appMain: document.getElementById("appMain"),
+  authSection: document.getElementById("authSection"),
+  userInfo: document.getElementById("userInfo"),
 
-const form = document.getElementById("expenseForm");
-const limitForm = document.getElementById("limitForm");
-const searchInput = document.getElementById("searchInput");
-const filterType = document.getElementById("filterType");
-const filterCategory = document.getElementById("filterCategory");
-const filterStartDate = document.getElementById("filterStartDate");
-const filterEndDate = document.getElementById("filterEndDate");
-const sortOrder = document.getElementById("sortOrder");
-const exportPdfBtn = document.getElementById("exportPdfBtn");
-const toggleFiltersBtn = document.getElementById("toggleFiltersBtn");
-const historyFilters = document.getElementById("historyFilters");
+  auth: {
+    email: document.getElementById("email"),
+    password: document.getElementById("password"),
+    registerBtn: document.getElementById("registerBtn"),
+    loginBtn: document.getElementById("loginBtn"),
+    googleLoginBtn: document.getElementById("googleLoginBtn"),
+    logoutBtn: document.getElementById("logoutBtn"),
+    editProfileBtn: document.getElementById("editProfileBtn"),
+    themeToggleBtn: document.getElementById("themeToggleBtn")
+  },
 
-const expenseTableBody = document.querySelector("#expenseTable tbody");
-const emptyState = document.getElementById("emptyState");
-const mobileHistoryList = document.getElementById("mobileHistoryList");
+  forms: {
+    expenseForm: document.getElementById("expenseForm"),
+    limitForm: document.getElementById("limitForm"),
+    editMovementForm: document.getElementById("editMovementForm")
+  },
 
-const profileModal = document.getElementById("profileModal");
-const editMovementModal = document.getElementById("editMovementModal");
-const deleteModal = document.getElementById("deleteModal");
+  movement: {
+    date: document.getElementById("date"),
+    category: document.getElementById("category"),
+    description: document.getElementById("description"),
+    amount: document.getElementById("amount"),
+    payment: document.getElementById("payment"),
+    type: document.getElementById("type"),
+    notes: document.getElementById("notes"),
+    submitMovementBtn: document.getElementById("submitMovementBtn"),
+    expenseLimitInput: document.getElementById("expenseLimitInput")
+  },
 
-const profileNameInput = document.getElementById("profileNameInput");
-const profileLimitInput = document.getElementById("profileLimitInput");
-const saveProfileBtn = document.getElementById("saveProfileBtn");
+  filters: {
+    searchInput: document.getElementById("searchInput"),
+    filterType: document.getElementById("filterType"),
+    filterCategory: document.getElementById("filterCategory"),
+    filterStartDate: document.getElementById("filterStartDate"),
+    filterEndDate: document.getElementById("filterEndDate"),
+    sortOrder: document.getElementById("sortOrder"),
+    exportPdfBtn: document.getElementById("exportPdfBtn"),
+    toggleFiltersBtn: document.getElementById("toggleFiltersBtn"),
+    historyFilters: document.getElementById("historyFilters")
+  },
 
-const editMovementForm = document.getElementById("editMovementForm");
-const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
-const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
+  history: {
+    expenseTableBody: document.querySelector("#expenseTable tbody"),
+    emptyState: document.getElementById("emptyState"),
+    mobileHistoryList: document.getElementById("mobileHistoryList")
+  },
 
-const expenseLimitLabel = document.getElementById("expenseLimitLabel");
-const limitProgress = document.getElementById("limitProgress");
-const limitProgressText = document.getElementById("limitProgressText");
+  modals: {
+    profileModal: document.getElementById("profileModal"),
+    editMovementModal: document.getElementById("editMovementModal"),
+    deleteModal: document.getElementById("deleteModal")
+  },
 
-const highestExpense = document.getElementById("highestExpense");
-const topCategory = document.getElementById("topCategory");
-const lastMovement = document.getElementById("lastMovement");
+  profile: {
+    profileNameInput: document.getElementById("profileNameInput"),
+    profileLimitInput: document.getElementById("profileLimitInput"),
+    saveProfileBtn: document.getElementById("saveProfileBtn")
+  },
 
-const currentMonthExpense = document.getElementById("currentMonthExpense");
-const previousMonthExpense = document.getElementById("previousMonthExpense");
-const monthlyDifference = document.getElementById("monthlyDifference");
-const monthlyTrendBadge = document.getElementById("monthlyTrendBadge");
-const comparisonText = document.getElementById("comparisonText");
-const comparisonCurrentBar = document.getElementById("comparisonCurrentBar");
+  delete: {
+    confirmDeleteBtn: document.getElementById("confirmDeleteBtn"),
+    cancelDeleteBtn: document.getElementById("cancelDeleteBtn")
+  },
 
-const categoryChartCanvas = document.getElementById("categoryChart");
-const balanceChartCanvas = document.getElementById("balanceChart");
+  summary: {
+    balance: document.getElementById("balance"),
+    totalExpenses: document.getElementById("totalExpenses"),
+    totalIncome: document.getElementById("totalIncome"),
+    highestExpense: document.getElementById("highestExpense"),
+    topCategory: document.getElementById("topCategory"),
+    lastMovement: document.getElementById("lastMovement")
+  },
 
-const categoryChartCtx = categoryChartCanvas ? categoryChartCanvas.getContext("2d") : null;
-const balanceChartCtx = balanceChartCanvas ? balanceChartCanvas.getContext("2d") : null;
+  limit: {
+    expenseLimitLabel: document.getElementById("expenseLimitLabel"),
+    limitProgress: document.getElementById("limitProgress"),
+    limitProgressText: document.getElementById("limitProgressText")
+  },
 
+  comparison: {
+    currentMonthExpense: document.getElementById("currentMonthExpense"),
+    previousMonthExpense: document.getElementById("previousMonthExpense"),
+    monthlyDifference: document.getElementById("monthlyDifference"),
+    monthlyTrendBadge: document.getElementById("monthlyTrendBadge"),
+    comparisonText: document.getElementById("comparisonText"),
+    comparisonCurrentBar: document.getElementById("comparisonCurrentBar")
+  },
+
+  edit: {
+    id: document.getElementById("editId"),
+    date: document.getElementById("editDate"),
+    category: document.getElementById("editCategory"),
+    description: document.getElementById("editDescription"),
+    amount: document.getElementById("editAmount"),
+    payment: document.getElementById("editPayment"),
+    type: document.getElementById("editType"),
+    notes: document.getElementById("editNotes")
+  },
+
+  charts: {
+    categoryCanvas: document.getElementById("categoryChart"),
+    balanceCanvas: document.getElementById("balanceChart")
+  }
+};
+
+DOM.charts.categoryCtx = DOM.charts.categoryCanvas
+  ? DOM.charts.categoryCanvas.getContext("2d")
+  : null;
+
+DOM.charts.balanceCtx = DOM.charts.balanceCanvas
+  ? DOM.charts.balanceCanvas.getContext("2d")
+  : null;
+
+/* =========================
+   HELPERS
+========================= */
 function formatMoney(value) {
   return `${currency} ${Number(value).toFixed(2)}`;
 }
@@ -119,6 +186,14 @@ function safeResizeUpdateChart(chart) {
   chart.update();
 }
 
+function showElement(el) {
+  if (el) el.classList.remove("hidden");
+}
+
+function hideElement(el) {
+  if (el) el.classList.add("hidden");
+}
+
 function showToast(title, message, type = "info") {
   const container = document.getElementById("toastContainer");
   if (!container) return;
@@ -139,77 +214,91 @@ function showToast(title, message, type = "info") {
   }, 3200);
 }
 
-function applyTheme(theme) {
-  document.documentElement.setAttribute("data-theme", theme);
-  localStorage.setItem("theme", theme);
-  if (themeToggleBtn) {
-    themeToggleBtn.textContent = theme === "dark" ? "🌙" : "☀️";
-  }
+function getCurrentUser() {
+  return auth.currentUser;
 }
 
-if (themeToggleBtn) {
-  themeToggleBtn.addEventListener("click", () => {
-    const current = document.documentElement.getAttribute("data-theme") || "dark";
-    applyTheme(current === "dark" ? "light" : "dark");
-    refreshChartsAppearance();
+function getAuthFormValues() {
+  return {
+    email: DOM.auth.email?.value.trim() || "",
+    password: DOM.auth.password?.value.trim() || ""
+  };
+}
+
+function getMovementFormValues() {
+  return {
+    date: DOM.movement.date?.value || "",
+    category: DOM.movement.category?.value || "",
+    description: DOM.movement.description?.value.trim() || "",
+    amount: parseFloat(DOM.movement.amount?.value),
+    payment: DOM.movement.payment?.value || "",
+    type: DOM.movement.type?.value || "",
+    notes: DOM.movement.notes?.value.trim() || ""
+  };
+}
+
+function getEditFormValues() {
+  return {
+    id: DOM.edit.id?.value || "",
+    data: {
+      date: DOM.edit.date?.value || "",
+      category: DOM.edit.category?.value || "",
+      description: DOM.edit.description?.value.trim() || "",
+      amount: parseFloat(DOM.edit.amount?.value),
+      payment: DOM.edit.payment?.value || "",
+      type: DOM.edit.type?.value || "",
+      notes: DOM.edit.notes?.value.trim() || ""
+    }
+  };
+}
+
+function resetMovementSubmitButton() {
+  if (!DOM.movement.submitMovementBtn) return;
+  DOM.movement.submitMovementBtn.disabled = false;
+  DOM.movement.submitMovementBtn.textContent = "Agregar movimiento";
+}
+
+function setMovementSubmitLoading() {
+  if (!DOM.movement.submitMovementBtn) return;
+  DOM.movement.submitMovementBtn.disabled = true;
+  DOM.movement.submitMovementBtn.textContent = "Guardando...";
+}
+
+function sortExpensesChronologically(list) {
+  list.sort((a, b) => {
+    const dateDiff = new Date(a.date) - new Date(b.date);
+    if (dateDiff !== 0) return dateDiff;
+    return (a.createdAt || 0) - (b.createdAt || 0);
   });
 }
 
-applyTheme(localStorage.getItem("theme") || "dark");
-
-function getThemeTextColor() {
-  return getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#fff";
+function openModal(modal) {
+  if (modal) modal.classList.remove("hidden");
 }
 
-let categoryChart = categoryChartCtx ? new Chart(categoryChartCtx, {
-  type: "doughnut",
-  data: {
-    labels: [],
-    datasets: [{
-      data: [],
-      backgroundColor: []
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom",
-        labels: { color: getThemeTextColor() }
-      }
-    }
-  }
-}) : null;
+function closeModal(modal) {
+  if (modal) modal.classList.add("hidden");
+}
 
-let balanceChart = balanceChartCtx ? new Chart(balanceChartCtx, {
-  type: "line",
-  data: {
-    labels: [],
-    datasets: [{
-      label: "Saldo acumulado",
-      data: [],
-      borderColor: "#1dd1a1",
-      backgroundColor: "rgba(29, 209, 161, 0.12)",
-      fill: true,
-      tension: 0.35,
-      pointRadius: 4
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        labels: { color: getThemeTextColor() }
-      }
-    },
-    scales: {
-      x: { ticks: { color: getThemeTextColor() } },
-      y: { ticks: { color: getThemeTextColor() } }
-    }
+function getThemeTextColor() {
+  return (
+    getComputedStyle(document.documentElement)
+      .getPropertyValue("--text")
+      .trim() || "#fff"
+  );
+}
+
+/* =========================
+   TEMA
+========================= */
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("theme", theme);
+
+  if (DOM.auth.themeToggleBtn) {
+    DOM.auth.themeToggleBtn.textContent = theme === "dark" ? "🌙" : "☀️";
   }
-}) : null;
+}
 
 function refreshChartsAppearance() {
   const color = getThemeTextColor();
@@ -230,28 +319,89 @@ function refreshChartsAppearance() {
   }, 100);
 }
 
+applyTheme(localStorage.getItem("theme") || "dark");
+
+/* =========================
+   CHARTS
+========================= */
+let categoryChart = DOM.charts.categoryCtx
+  ? new Chart(DOM.charts.categoryCtx, {
+      type: "doughnut",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            data: [],
+            backgroundColor: []
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: { color: getThemeTextColor() }
+          }
+        }
+      }
+    })
+  : null;
+
+let balanceChart = DOM.charts.balanceCtx
+  ? new Chart(DOM.charts.balanceCtx, {
+      type: "line",
+      data: {
+        labels: [],
+        datasets: [
+          {
+            label: "Saldo acumulado",
+            data: [],
+            borderColor: "#1dd1a1",
+            backgroundColor: "rgba(29, 209, 161, 0.12)",
+            fill: true,
+            tension: 0.35,
+            pointRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: getThemeTextColor() }
+          }
+        },
+        scales: {
+          x: { ticks: { color: getThemeTextColor() } },
+          y: { ticks: { color: getThemeTextColor() } }
+        }
+      }
+    })
+  : null;
+
+/* =========================
+   NAVEGACIÓN Y MODALES
+========================= */
 function setActiveNav(tabId) {
-  document.querySelectorAll(".nav-btn").forEach(btn => {
+  document.querySelectorAll(".nav-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.tab === tabId);
   });
 
-  document.querySelectorAll(".bottom-nav-btn").forEach(btn => {
+  document.querySelectorAll(".bottom-nav-btn").forEach((btn) => {
     btn.classList.toggle("active", btn.dataset.tab === tabId);
   });
 }
 
-document.querySelectorAll(".nav-btn").forEach(btn => {
-  btn.addEventListener("click", () => activateTab(btn.dataset.tab));
-});
-
-document.querySelectorAll(".bottom-nav-btn").forEach(btn => {
-  btn.addEventListener("click", () => activateTab(btn.dataset.tab));
-});
-
 function activateTab(tabId) {
   setActiveNav(tabId);
 
-  document.querySelectorAll(".tab-content").forEach(section => section.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach((section) => {
+    section.classList.remove("active");
+  });
+
   document.getElementById(tabId)?.classList.add("active");
 
   setTimeout(() => {
@@ -260,166 +410,9 @@ function activateTab(tabId) {
   }, 150);
 }
 
-function openModal(modal) {
-  if (modal) modal.classList.remove("hidden");
-}
-
-function closeModal(modal) {
-  if (modal) modal.classList.add("hidden");
-}
-
-document.querySelectorAll("[data-close]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.getElementById(btn.dataset.close)?.classList.add("hidden");
-  });
-});
-
-window.addEventListener("click", (e) => {
-  if (e.target.classList.contains("modal-overlay")) {
-    e.target.classList.add("hidden");
-  }
-});
-
-if (cancelDeleteBtn) {
-  cancelDeleteBtn.addEventListener("click", () => {
-    pendingDeleteId = null;
-    closeModal(deleteModal);
-  });
-}
-
-if (toggleFiltersBtn) {
-  toggleFiltersBtn.addEventListener("click", () => {
-    if (historyFilters) {
-      historyFilters.classList.toggle("show");
-    }
-  });
-}
-
-if (registerBtn) {
-  registerBtn.addEventListener("click", async () => {
-    const email = document.getElementById("email")?.value.trim() || "";
-    const password = document.getElementById("password")?.value.trim() || "";
-
-    if (!email || !password) {
-      showToast("Campos incompletos", "Completa correo y contraseña.", "warning");
-      return;
-    }
-
-    if (password.length < 6) {
-      showToast("Contraseña inválida", "Debe tener al menos 6 caracteres.", "warning");
-      return;
-    }
-
-    try {
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-      await setDoc(doc(db, "usuarios", cred.user.uid), {
-        name: email.split("@")[0],
-        expenseLimit: 0
-      });
-
-      showToast("Cuenta creada", "Tu cuenta fue registrada correctamente.", "success");
-    } catch (error) {
-      console.error(error);
-      showToast("Error al registrarte", error.message, "error");
-    }
-  });
-}
-
-if (loginBtn) {
-  loginBtn.addEventListener("click", async () => {
-    const email = document.getElementById("email")?.value.trim() || "";
-    const password = document.getElementById("password")?.value.trim() || "";
-
-    if (!email || !password) {
-      showToast("Campos incompletos", "Completa correo y contraseña.", "warning");
-      return;
-    }
-
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      showToast("Bienvenido", "Sesión iniciada correctamente.", "success");
-    } catch (error) {
-      console.error(error);
-      showToast("Error al iniciar sesión", error.message, "error");
-    }
-  });
-}
-
-if (googleLoginBtn) {
-  googleLoginBtn.addEventListener("click", async () => {
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-
-      const profileRef = doc(db, "usuarios", user.uid);
-      const profileSnap = await getDoc(profileRef);
-
-      if (!profileSnap.exists()) {
-        await setDoc(profileRef, {
-          name: user.displayName || user.email?.split("@")[0] || "Usuario",
-          expenseLimit: 0
-        });
-      }
-
-      showToast("Google login", "Sesión iniciada correctamente.", "success");
-    } catch (error) {
-      console.error(error);
-      showToast("Error con Google", error.message, "error");
-    }
-  });
-}
-
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", async () => {
-    try {
-      await signOut(auth);
-      showToast("Sesión cerrada", "Vuelve pronto.", "info");
-    } catch (error) {
-      console.error(error);
-      showToast("Error", "No se pudo cerrar sesión.", "error");
-    }
-  });
-}
-
-if (editProfileBtn) {
-  editProfileBtn.addEventListener("click", () => {
-    if (profileNameInput) profileNameInput.value = userProfile.name || "";
-    if (profileLimitInput) profileLimitInput.value = userProfile.expenseLimit || "";
-    openModal(profileModal);
-  });
-}
-
-if (saveProfileBtn) {
-  saveProfileBtn.addEventListener("click", async () => {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const name = profileNameInput?.value.trim() || "";
-    const expenseLimit = parseFloat(profileLimitInput?.value) || 0;
-
-    if (!name) {
-      showToast("Nombre requerido", "Ingresa un nombre.", "warning");
-      return;
-    }
-
-    try {
-      userProfile.name = name;
-      userProfile.expenseLimit = expenseLimit;
-
-      await setDoc(doc(db, "usuarios", user.uid), userProfile);
-
-      setText(userInfo, `Bienvenido, ${userProfile.name}`);
-      updateLimitUI();
-      closeModal(profileModal);
-      showToast("Perfil actualizado", "Tus datos se guardaron correctamente.", "success");
-    } catch (error) {
-      console.error(error);
-      showToast("Error", "No se pudo actualizar el perfil.", "error");
-    }
-  });
-}
-
+/* =========================
+   PERFIL
+========================= */
 async function loadUserProfile(user) {
   const ref = doc(db, "usuarios", user.uid);
   const snap = await getDoc(ref);
@@ -437,97 +430,152 @@ async function loadUserProfile(user) {
     await setDoc(ref, userProfile);
   }
 
-  setText(userInfo, `Bienvenido, ${userProfile.name}`);
+  setText(DOM.userInfo, `Bienvenido, ${userProfile.name}`);
   updateLimitUI();
 }
 
-if (limitForm) {
-  limitForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const user = auth.currentUser;
-    if (!user) return;
+async function saveProfile() {
+  const user = getCurrentUser();
+  if (!user) return;
 
-    const expenseLimitInput = document.getElementById("expenseLimitInput");
-    const value = parseFloat(expenseLimitInput?.value);
+  const name = DOM.profile.profileNameInput?.value.trim() || "";
+  const expenseLimit = parseFloat(DOM.profile.profileLimitInput?.value) || 0;
 
-    if (isNaN(value) || value < 0) {
-      showToast("Tope inválido", "Ingresa un monto válido.", "warning");
-      return;
-    }
+  if (!name) {
+    showToast("Nombre requerido", "Ingresa un nombre.", "warning");
+    return;
+  }
 
-    try {
-      userProfile.expenseLimit = value;
-      await updateDoc(doc(db, "usuarios", user.uid), { expenseLimit: value });
-      if (expenseLimitInput) expenseLimitInput.value = "";
-      updateLimitUI();
-      showToast("Tope guardado", "Tu tope mensual fue actualizado.", "success");
-    } catch (error) {
-      console.error(error);
-      showToast("Error", "No se pudo guardar el tope.", "error");
-    }
-  });
+  try {
+    userProfile.name = name;
+    userProfile.expenseLimit = expenseLimit;
+
+    await setDoc(doc(db, "usuarios", user.uid), userProfile);
+
+    setText(DOM.userInfo, `Bienvenido, ${userProfile.name}`);
+    updateLimitUI();
+    closeModal(DOM.modals.profileModal);
+    showToast("Perfil actualizado", "Tus datos se guardaron correctamente.", "success");
+  } catch (error) {
+    console.error(error);
+    showToast("Error", "No se pudo actualizar el perfil.", "error");
+  }
 }
 
-if (form) {
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+async function saveExpenseLimit(event) {
+  event.preventDefault();
 
-    const user = auth.currentUser;
-    if (!user) {
-      showToast("Sesión requerida", "Debes iniciar sesión.", "warning");
-      return;
+  const user = getCurrentUser();
+  if (!user) return;
+
+  const value = parseFloat(DOM.movement.expenseLimitInput?.value);
+
+  if (isNaN(value) || value < 0) {
+    showToast("Tope inválido", "Ingresa un monto válido.", "warning");
+    return;
+  }
+
+  try {
+    userProfile.expenseLimit = value;
+    await updateDoc(doc(db, "usuarios", user.uid), { expenseLimit: value });
+
+    if (DOM.movement.expenseLimitInput) {
+      DOM.movement.expenseLimitInput.value = "";
     }
 
-    const date = document.getElementById("date")?.value || "";
-    const category = document.getElementById("category")?.value || "";
-    const description = document.getElementById("description")?.value.trim() || "";
-    const amount = parseFloat(document.getElementById("amount")?.value);
-    const payment = document.getElementById("payment")?.value || "";
-    const type = document.getElementById("type")?.value || "";
-    const notes = document.getElementById("notes")?.value.trim() || "";
+    updateLimitUI();
+    showToast("Tope guardado", "Tu tope mensual fue actualizado.", "success");
+  } catch (error) {
+    console.error(error);
+    showToast("Error", "No se pudo guardar el tope.", "error");
+  }
+}
 
-    if (!date || !category || !description || isNaN(amount) || amount <= 0) {
-      showToast("Campos inválidos", "Completa correctamente el formulario.", "warning");
-      return;
-    }
+/* =========================
+   AUTH
+========================= */
+async function registerUser() {
+  const { email, password } = getAuthFormValues();
 
-    const submitBtn = document.getElementById("submitMovementBtn");
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Guardando...";
-    }
+  if (!email || !password) {
+    showToast("Campos incompletos", "Completa correo y contraseña.", "warning");
+    return;
+  }
 
-    try {
-      await addDoc(collection(db, "movimientos"), {
-        uid: user.uid,
-        date,
-        category,
-        description,
-        amount,
-        payment,
-        type,
-        notes,
-        createdAt: Date.now()
+  if (password.length < 6) {
+    showToast("Contraseña inválida", "Debe tener al menos 6 caracteres.", "warning");
+    return;
+  }
+
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+    await setDoc(doc(db, "usuarios", cred.user.uid), {
+      name: email.split("@")[0],
+      expenseLimit: 0
+    });
+
+    showToast("Cuenta creada", "Tu cuenta fue registrada correctamente.", "success");
+  } catch (error) {
+    console.error(error);
+    showToast("Error al registrarte", error.message, "error");
+  }
+}
+
+async function loginUser() {
+  const { email, password } = getAuthFormValues();
+
+  if (!email || !password) {
+    showToast("Campos incompletos", "Completa correo y contraseña.", "warning");
+    return;
+  }
+
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    showToast("Bienvenido", "Sesión iniciada correctamente.", "success");
+  } catch (error) {
+    console.error(error);
+    showToast("Error al iniciar sesión", error.message, "error");
+  }
+}
+
+async function loginWithGoogle() {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
+
+    const profileRef = doc(db, "usuarios", user.uid);
+    const profileSnap = await getDoc(profileRef);
+
+    if (!profileSnap.exists()) {
+      await setDoc(profileRef, {
+        name: user.displayName || user.email?.split("@")[0] || "Usuario",
+        expenseLimit: 0
       });
-
-      form.reset();
-      await loadData();
-      activateTab("history");
-      showToast("Movimiento agregado", "Tu registro se guardó correctamente.", "success");
-    } catch (error) {
-      console.error(error);
-      showToast("Error", "No se pudo guardar el movimiento.", "error");
-    } finally {
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Agregar movimiento";
-      }
     }
-  });
+
+    showToast("Google login", "Sesión iniciada correctamente.", "success");
+  } catch (error) {
+    console.error(error);
+    showToast("Error con Google", error.message, "error");
+  }
 }
 
+async function logoutUser() {
+  try {
+    await signOut(auth);
+    showToast("Sesión cerrada", "Vuelve pronto.", "info");
+  } catch (error) {
+    console.error(error);
+    showToast("Error", "No se pudo cerrar sesión.", "error");
+  }
+}
+
+/* =========================
+   MOVIMIENTOS
+========================= */
 async function loadData() {
-  const user = auth.currentUser;
+  const user = getCurrentUser();
   if (!user) return;
 
   try {
@@ -544,12 +592,7 @@ async function loadData() {
       }
     });
 
-    expenses.sort((a, b) => {
-      const dateDiff = new Date(a.date) - new Date(b.date);
-      if (dateDiff !== 0) return dateDiff;
-      return (a.createdAt || 0) - (b.createdAt || 0);
-    });
-
+    sortExpensesChronologically(expenses);
     update();
   } catch (error) {
     console.error("ERROR LOAD DATA:", error);
@@ -557,15 +600,127 @@ async function loadData() {
   }
 }
 
+async function createMovement(event) {
+  event.preventDefault();
+
+  const user = getCurrentUser();
+  if (!user) {
+    showToast("Sesión requerida", "Debes iniciar sesión.", "warning");
+    return;
+  }
+
+  const movement = getMovementFormValues();
+
+  if (
+    !movement.date ||
+    !movement.category ||
+    !movement.description ||
+    isNaN(movement.amount) ||
+    movement.amount <= 0
+  ) {
+    showToast("Campos inválidos", "Completa correctamente el formulario.", "warning");
+    return;
+  }
+
+  setMovementSubmitLoading();
+
+  try {
+    await addDoc(collection(db, "movimientos"), {
+      uid: user.uid,
+      ...movement,
+      createdAt: Date.now()
+    });
+
+    DOM.forms.expenseForm?.reset();
+    await loadData();
+    activateTab("history");
+    showToast("Movimiento agregado", "Tu registro se guardó correctamente.", "success");
+  } catch (error) {
+    console.error(error);
+    showToast("Error", "No se pudo guardar el movimiento.", "error");
+  } finally {
+    resetMovementSubmitButton();
+  }
+}
+
+function openEditMovement(id) {
+  const movement = expenses.find((item) => item.id === id);
+  if (!movement) return;
+
+  if (DOM.edit.id) DOM.edit.id.value = movement.id;
+  if (DOM.edit.date) DOM.edit.date.value = movement.date;
+  if (DOM.edit.category) DOM.edit.category.value = movement.category;
+  if (DOM.edit.description) DOM.edit.description.value = movement.description;
+  if (DOM.edit.amount) DOM.edit.amount.value = movement.amount;
+  if (DOM.edit.payment) DOM.edit.payment.value = movement.payment;
+  if (DOM.edit.type) DOM.edit.type.value = movement.type;
+  if (DOM.edit.notes) DOM.edit.notes.value = movement.notes || "";
+
+  openModal(DOM.modals.editMovementModal);
+}
+
+async function updateMovement(event) {
+  event.preventDefault();
+
+  const { id, data } = getEditFormValues();
+
+  if (
+    !data.date ||
+    !data.category ||
+    !data.description ||
+    isNaN(data.amount) ||
+    data.amount <= 0
+  ) {
+    showToast("Datos inválidos", "Completa correctamente la edición.", "warning");
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db, "movimientos", id), data);
+
+    const index = expenses.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      expenses[index] = { ...expenses[index], ...data };
+    }
+
+    sortExpensesChronologically(expenses);
+    closeModal(DOM.modals.editMovementModal);
+    update();
+    showToast("Movimiento actualizado", "Los cambios se guardaron correctamente.", "success");
+  } catch (error) {
+    console.error(error);
+    showToast("Error", "No se pudo actualizar el movimiento.", "error");
+  }
+}
+
+async function confirmDeleteMovement() {
+  if (!pendingDeleteId) return;
+
+  try {
+    await deleteDoc(doc(db, "movimientos", pendingDeleteId));
+    expenses = expenses.filter((item) => item.id !== pendingDeleteId);
+    pendingDeleteId = null;
+    closeModal(DOM.modals.deleteModal);
+    update();
+    showToast("Movimiento eliminado", "El registro fue eliminado correctamente.", "success");
+  } catch (error) {
+    console.error(error);
+    showToast("Error", "No se pudo eliminar el movimiento.", "error");
+  }
+}
+
+/* =========================
+   FILTROS Y RENDER
+========================= */
 function getFilteredExpenses() {
   let filtered = [...expenses];
 
-  const searchVal = searchInput?.value.toLowerCase().trim() || "";
-  const typeVal = filterType?.value || "";
-  const categoryVal = filterCategory?.value || "";
-  const startVal = filterStartDate?.value || "";
-  const endVal = filterEndDate?.value || "";
-  const sortVal = sortOrder?.value || "newest";
+  const searchVal = DOM.filters.searchInput?.value.toLowerCase().trim() || "";
+  const typeVal = DOM.filters.filterType?.value || "";
+  const categoryVal = DOM.filters.filterCategory?.value || "";
+  const startVal = DOM.filters.filterStartDate?.value || "";
+  const endVal = DOM.filters.filterEndDate?.value || "";
+  const sortVal = DOM.filters.sortOrder?.value || "newest";
 
   filtered = filtered.filter((item) => {
     const matchesSearch =
@@ -590,20 +745,47 @@ function getFilteredExpenses() {
   return filtered;
 }
 
-function renderMobileHistory(filteredExpenses) {
-  if (!mobileHistoryList) return;
+function renderTableHistory(filteredExpenses) {
+  if (!DOM.history.expenseTableBody) return;
 
-  setHtml(mobileHistoryList, "");
+  DOM.history.expenseTableBody.innerHTML = "";
+
+  filteredExpenses.forEach((e) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${e.date}</td>
+      <td style="color:${categoryColors[e.category] || "#fff"}; font-weight:700;">${e.category}</td>
+      <td>${e.description}</td>
+      <td>${formatMoney(e.amount)}</td>
+      <td>${e.payment}</td>
+      <td>${e.type}</td>
+      <td>${e.notes || ""}</td>
+      <td>
+        <button class="edit-btn" data-id="${e.id}">Editar</button>
+        <button class="delete-btn" data-id="${e.id}">Borrar</button>
+      </td>
+    `;
+    DOM.history.expenseTableBody.appendChild(row);
+  });
+}
+
+function renderMobileHistory(filteredExpenses) {
+  if (!DOM.history.mobileHistoryList) return;
+
+  setHtml(DOM.history.mobileHistoryList, "");
 
   if (filteredExpenses.length === 0) {
-    setHtml(mobileHistoryList, `
+    setHtml(
+      DOM.history.mobileHistoryList,
+      `
       <div class="mobile-history-card">
         <div class="empty-state">
           <h3>No hay movimientos</h3>
           <p>Empieza registrando tu primer ingreso o gasto.</p>
         </div>
       </div>
-    `);
+    `
+    );
     return;
   }
 
@@ -634,40 +816,83 @@ function renderMobileHistory(filteredExpenses) {
       </div>
     `;
 
-    mobileHistoryList.appendChild(card);
+    DOM.history.mobileHistoryList.appendChild(card);
   });
 
-  document.querySelectorAll(".mobile-action-btn.edit").forEach(btn => {
-    btn.addEventListener("click", () => {
-      openEditMovement(btn.dataset.id);
-    });
+  document.querySelectorAll(".mobile-action-btn.edit").forEach((btn) => {
+    btn.addEventListener("click", () => openEditMovement(btn.dataset.id));
   });
 
-  document.querySelectorAll(".mobile-action-btn.delete").forEach(btn => {
+  document.querySelectorAll(".mobile-action-btn.delete").forEach((btn) => {
     btn.addEventListener("click", () => {
       pendingDeleteId = btn.dataset.id;
-      openModal(deleteModal);
+      openModal(DOM.modals.deleteModal);
     });
+  });
+}
+
+function updateSummary(totalIncome, totalExpenses, categoryTotals) {
+  setText(DOM.summary.balance, formatMoney(totalIncome - totalExpenses));
+  setText(DOM.summary.totalExpenses, formatMoney(totalExpenses));
+  setText(DOM.summary.totalIncome, formatMoney(totalIncome));
+
+  const highest = Object.values(categoryTotals).length
+    ? Math.max(...Object.values(categoryTotals))
+    : 0;
+
+  setText(DOM.summary.highestExpense, formatMoney(highest));
+
+  const topCategoryEntry = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0];
+  setText(DOM.summary.topCategory, topCategoryEntry ? topCategoryEntry[0] : "-");
+
+  let last = "-";
+  if (expenses.length > 0) {
+    const lastItem = expenses[expenses.length - 1];
+    last = `${lastItem.description} (${lastItem.date})`;
+  }
+  setText(DOM.summary.lastMovement, last);
+}
+
+function updateCharts(categoryTotals, balanceTimeline) {
+  const labels = Object.keys(categoryTotals);
+
+  if (categoryChart) {
+    categoryChart.data.labels = labels;
+    categoryChart.data.datasets[0].data = Object.values(categoryTotals);
+    categoryChart.data.datasets[0].backgroundColor = labels.map(
+      (label) => categoryColors[label] || "#ccc"
+    );
+  }
+
+  if (balanceChart) {
+    balanceChart.data.labels = balanceTimeline.map((item) => item.date);
+    balanceChart.data.datasets[0].data = balanceTimeline.map((item) => item.balance);
+  }
+}
+
+function bindActionButtons() {
+  document.querySelectorAll(".delete-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      pendingDeleteId = btn.dataset.id;
+      openModal(DOM.modals.deleteModal);
+    });
+  });
+
+  document.querySelectorAll(".edit-btn").forEach((btn) => {
+    btn.addEventListener("click", () => openEditMovement(btn.dataset.id));
   });
 }
 
 function update() {
   let totalExpenses = 0;
   let totalIncome = 0;
-  let categoryTotals = {};
-  let balanceTimeline = [];
-  let highest = 0;
-  let last = "-";
-
-  if (expenseTableBody) {
-    expenseTableBody.innerHTML = "";
-  }
+  const categoryTotals = {};
+  const balanceTimeline = [];
 
   expenses.forEach((e) => {
     if (e.type === "Gasto") {
       totalExpenses += Number(e.amount);
       categoryTotals[e.category] = (categoryTotals[e.category] || 0) + Number(e.amount);
-      if (Number(e.amount) > highest) highest = Number(e.amount);
     } else {
       totalIncome += Number(e.amount);
     }
@@ -680,60 +905,15 @@ function update() {
 
   const filteredExpenses = getFilteredExpenses();
 
-  filteredExpenses.forEach((e) => {
-    if (!expenseTableBody) return;
-
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${e.date}</td>
-      <td style="color:${categoryColors[e.category] || "#fff"}; font-weight:700;">${e.category}</td>
-      <td>${e.description}</td>
-      <td>${formatMoney(e.amount)}</td>
-      <td>${e.payment}</td>
-      <td>${e.type}</td>
-      <td>${e.notes || ""}</td>
-      <td>
-        <button class="edit-btn" data-id="${e.id}">Editar</button>
-        <button class="delete-btn" data-id="${e.id}">Borrar</button>
-      </td>
-    `;
-    expenseTableBody.appendChild(row);
-  });
-
+  renderTableHistory(filteredExpenses);
   renderMobileHistory(filteredExpenses);
 
-  if (emptyState) {
-    emptyState.classList.toggle("hidden", filteredExpenses.length !== 0);
+  if (DOM.history.emptyState) {
+    DOM.history.emptyState.classList.toggle("hidden", filteredExpenses.length !== 0);
   }
 
-  setText(document.getElementById("balance"), formatMoney(totalIncome - totalExpenses));
-  setText(document.getElementById("totalExpenses"), formatMoney(totalExpenses));
-  setText(document.getElementById("totalIncome"), formatMoney(totalIncome));
-
-  setText(highestExpense, formatMoney(highest));
-
-  const topCategoryEntry = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0];
-  setText(topCategory, topCategoryEntry ? topCategoryEntry[0] : "-");
-
-  if (expenses.length > 0) {
-    const lastItem = expenses[expenses.length - 1];
-    last = `${lastItem.description} (${lastItem.date})`;
-  }
-  setText(lastMovement, last);
-
-  const labels = Object.keys(categoryTotals);
-
-  if (categoryChart) {
-    categoryChart.data.labels = labels;
-    categoryChart.data.datasets[0].data = Object.values(categoryTotals);
-    categoryChart.data.datasets[0].backgroundColor = labels.map(label => categoryColors[label] || "#ccc");
-  }
-
-  if (balanceChart) {
-    balanceChart.data.labels = balanceTimeline.map(item => item.date);
-    balanceChart.data.datasets[0].data = balanceTimeline.map(item => item.balance);
-  }
-
+  updateSummary(totalIncome, totalExpenses, categoryTotals);
+  updateCharts(categoryTotals, balanceTimeline);
   updateLimitUI(totalExpenses);
   updateMonthlyComparison();
   bindActionButtons();
@@ -744,24 +924,33 @@ function update() {
   }, 100);
 }
 
+/* =========================
+   LÍMITE Y COMPARACIÓN
+========================= */
 function updateLimitUI(totalExpensesParam = null) {
-  const totalExpenses = totalExpensesParam ?? expenses
-    .filter(item => item.type === "Gasto")
-    .reduce((sum, item) => sum + Number(item.amount), 0);
+  const totalExpenses =
+    totalExpensesParam ??
+    expenses
+      .filter((item) => item.type === "Gasto")
+      .reduce((sum, item) => sum + Number(item.amount), 0);
 
   const limit = Number(userProfile.expenseLimit || 0);
 
   if (!limit || limit <= 0) {
-    setText(expenseLimitLabel, "No configurado");
-    setWidth(limitProgress, "0%");
-    setText(limitProgressText, "Configura un límite para monitorear tus gastos.");
+    setText(DOM.limit.expenseLimitLabel, "No configurado");
+    setWidth(DOM.limit.limitProgress, "0%");
+    setText(DOM.limit.limitProgressText, "Configura un límite para monitorear tus gastos.");
     return;
   }
 
   const progress = Math.min((totalExpenses / limit) * 100, 100);
-  setText(expenseLimitLabel, formatMoney(limit));
-  setWidth(limitProgress, `${progress}%`);
-  setText(limitProgressText, `Has gastado ${formatMoney(totalExpenses)} de ${formatMoney(limit)} (${progress.toFixed(1)}%).`);
+
+  setText(DOM.limit.expenseLimitLabel, formatMoney(limit));
+  setWidth(DOM.limit.limitProgress, `${progress}%`);
+  setText(
+    DOM.limit.limitProgressText,
+    `Has gastado ${formatMoney(totalExpenses)} de ${formatMoney(limit)} (${progress.toFixed(1)}%).`
+  );
 }
 
 function updateMonthlyComparison() {
@@ -771,6 +960,7 @@ function updateMonthlyComparison() {
 
   let prevMonth = currentMonth - 1;
   let prevYear = currentYear;
+
   if (prevMonth < 0) {
     prevMonth = 11;
     prevYear--;
@@ -792,9 +982,9 @@ function updateMonthlyComparison() {
 
   const diff = current - previous;
 
-  setText(currentMonthExpense, formatMoney(current));
-  setText(previousMonthExpense, formatMoney(previous));
-  setText(monthlyDifference, formatMoney(Math.abs(diff)));
+  setText(DOM.comparison.currentMonthExpense, formatMoney(current));
+  setText(DOM.comparison.previousMonthExpense, formatMoney(previous));
+  setText(DOM.comparison.monthlyDifference, formatMoney(Math.abs(diff)));
 
   let percent = 0;
   if (previous > 0) {
@@ -803,188 +993,196 @@ function updateMonthlyComparison() {
     percent = 100;
   }
 
-  setWidth(comparisonCurrentBar, `${percent}%`);
+  setWidth(DOM.comparison.comparisonCurrentBar, `${percent}%`);
 
   if (current > previous) {
-    setText(monthlyTrendBadge, "Gastaste más");
-    if (monthlyTrendBadge) monthlyTrendBadge.className = "trend-badge up";
-    setText(comparisonText, `Este mes llevas ${formatMoney(diff)} más en gastos que el mes anterior.`);
+    setText(DOM.comparison.monthlyTrendBadge, "Gastaste más");
+    if (DOM.comparison.monthlyTrendBadge) {
+      DOM.comparison.monthlyTrendBadge.className = "trend-badge up";
+    }
+    setText(
+      DOM.comparison.comparisonText,
+      `Este mes llevas ${formatMoney(diff)} más en gastos que el mes anterior.`
+    );
   } else if (current < previous) {
-    setText(monthlyTrendBadge, "Gastaste menos");
-    if (monthlyTrendBadge) monthlyTrendBadge.className = "trend-badge down";
-    setText(comparisonText, `Este mes llevas ${formatMoney(previous - current)} menos en gastos que el mes anterior.`);
+    setText(DOM.comparison.monthlyTrendBadge, "Gastaste menos");
+    if (DOM.comparison.monthlyTrendBadge) {
+      DOM.comparison.monthlyTrendBadge.className = "trend-badge down";
+    }
+    setText(
+      DOM.comparison.comparisonText,
+      `Este mes llevas ${formatMoney(previous - current)} menos en gastos que el mes anterior.`
+    );
   } else {
-    setText(monthlyTrendBadge, "Igual");
-    if (monthlyTrendBadge) monthlyTrendBadge.className = "trend-badge neutral";
-    setText(comparisonText, "Tus gastos están iguales respecto al mes anterior.");
+    setText(DOM.comparison.monthlyTrendBadge, "Igual");
+    if (DOM.comparison.monthlyTrendBadge) {
+      DOM.comparison.monthlyTrendBadge.className = "trend-badge neutral";
+    }
+    setText(
+      DOM.comparison.comparisonText,
+      "Tus gastos están iguales respecto al mes anterior."
+    );
   }
 }
 
-function bindActionButtons() {
-  document.querySelectorAll(".delete-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      pendingDeleteId = btn.dataset.id;
-      openModal(deleteModal);
-    });
-  });
+/* =========================
+   PDF
+========================= */
+function exportPdf() {
+  const filtered = getFilteredExpenses();
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
 
-  document.querySelectorAll(".edit-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      openEditMovement(btn.dataset.id);
-    });
-  });
-}
+  pdf.setFontSize(16);
+  pdf.text("Reporte financiero - Cuida Tus Finanzas", 14, 18);
 
-if (confirmDeleteBtn) {
-  confirmDeleteBtn.addEventListener("click", async () => {
-    if (!pendingDeleteId) return;
+  pdf.setFontSize(11);
+  pdf.text(`Usuario: ${userProfile.name || "Usuario"}`, 14, 28);
+  pdf.text(`Generado: ${new Date().toLocaleString()}`, 14, 35);
 
-    try {
-      await deleteDoc(doc(db, "movimientos", pendingDeleteId));
-      expenses = expenses.filter(item => item.id !== pendingDeleteId);
-      pendingDeleteId = null;
-      closeModal(deleteModal);
-      update();
-      showToast("Movimiento eliminado", "El registro fue eliminado correctamente.", "success");
-    } catch (error) {
-      console.error(error);
-      showToast("Error", "No se pudo eliminar el movimiento.", "error");
+  let y = 46;
+
+  filtered.forEach((item, index) => {
+    const line = `${index + 1}. ${item.date} | ${item.type} | ${item.category} | ${formatMoney(item.amount)} | ${item.description}`;
+    pdf.text(line, 14, y);
+    y += 8;
+
+    if (y > 280) {
+      pdf.addPage();
+      y = 20;
     }
   });
+
+  if (filtered.length === 0) {
+    pdf.text("No hay movimientos para exportar.", 14, y);
+  }
+
+  pdf.save("reporte-financiero.pdf");
+  showToast("PDF exportado", "Tu reporte fue descargado correctamente.", "success");
 }
 
-function openEditMovement(id) {
-  const movement = expenses.find(item => item.id === id);
-  if (!movement) return;
-
-  const editId = document.getElementById("editId");
-  const editDate = document.getElementById("editDate");
-  const editCategory = document.getElementById("editCategory");
-  const editDescription = document.getElementById("editDescription");
-  const editAmount = document.getElementById("editAmount");
-  const editPayment = document.getElementById("editPayment");
-  const editType = document.getElementById("editType");
-  const editNotes = document.getElementById("editNotes");
-
-  if (editId) editId.value = movement.id;
-  if (editDate) editDate.value = movement.date;
-  if (editCategory) editCategory.value = movement.category;
-  if (editDescription) editDescription.value = movement.description;
-  if (editAmount) editAmount.value = movement.amount;
-  if (editPayment) editPayment.value = movement.payment;
-  if (editType) editType.value = movement.type;
-  if (editNotes) editNotes.value = movement.notes || "";
-
-  openModal(editMovementModal);
-}
-
-if (editMovementForm) {
-  editMovementForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const id = document.getElementById("editId")?.value || "";
-
-    const updatedData = {
-      date: document.getElementById("editDate")?.value || "",
-      category: document.getElementById("editCategory")?.value || "",
-      description: document.getElementById("editDescription")?.value.trim() || "",
-      amount: parseFloat(document.getElementById("editAmount")?.value),
-      payment: document.getElementById("editPayment")?.value || "",
-      type: document.getElementById("editType")?.value || "",
-      notes: document.getElementById("editNotes")?.value.trim() || ""
-    };
-
-    if (!updatedData.date || !updatedData.category || !updatedData.description || isNaN(updatedData.amount) || updatedData.amount <= 0) {
-      showToast("Datos inválidos", "Completa correctamente la edición.", "warning");
-      return;
-    }
-
-    try {
-      await updateDoc(doc(db, "movimientos", id), updatedData);
-
-      const index = expenses.findIndex(item => item.id === id);
-      if (index !== -1) expenses[index] = { ...expenses[index], ...updatedData };
-
-      expenses.sort((a, b) => {
-        const dateDiff = new Date(a.date) - new Date(b.date);
-        if (dateDiff !== 0) return dateDiff;
-        return (a.createdAt || 0) - (b.createdAt || 0);
-      });
-
-      closeModal(editMovementModal);
-      update();
-      showToast("Movimiento actualizado", "Los cambios se guardaron correctamente.", "success");
-    } catch (error) {
-      console.error(error);
-      showToast("Error", "No se pudo actualizar el movimiento.", "error");
-    }
+/* =========================
+   LISTENERS
+========================= */
+if (DOM.auth.themeToggleBtn) {
+  DOM.auth.themeToggleBtn.addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme") || "dark";
+    applyTheme(current === "dark" ? "light" : "dark");
+    refreshChartsAppearance();
   });
 }
 
-if (searchInput) searchInput.addEventListener("input", update);
-if (filterType) filterType.addEventListener("change", update);
-if (filterCategory) filterCategory.addEventListener("change", update);
-if (filterStartDate) filterStartDate.addEventListener("change", update);
-if (filterEndDate) filterEndDate.addEventListener("change", update);
-if (sortOrder) sortOrder.addEventListener("change", update);
+document.querySelectorAll(".nav-btn").forEach((btn) => {
+  btn.addEventListener("click", () => activateTab(btn.dataset.tab));
+});
 
-if (exportPdfBtn) {
-  exportPdfBtn.addEventListener("click", () => {
-    const filtered = getFilteredExpenses();
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF();
+document.querySelectorAll(".bottom-nav-btn").forEach((btn) => {
+  btn.addEventListener("click", () => activateTab(btn.dataset.tab));
+});
 
-    pdf.setFontSize(16);
-    pdf.text("Reporte financiero - Cuida Tus Finanzas", 14, 18);
+document.querySelectorAll("[data-close]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.getElementById(btn.dataset.close)?.classList.add("hidden");
+  });
+});
 
-    pdf.setFontSize(11);
-    pdf.text(`Usuario: ${userProfile.name || "Usuario"}`, 14, 28);
-    pdf.text(`Generado: ${new Date().toLocaleString()}`, 14, 35);
+window.addEventListener("click", (e) => {
+  if (e.target.classList.contains("modal-overlay")) {
+    e.target.classList.add("hidden");
+  }
+});
 
-    let y = 46;
-    filtered.forEach((item, index) => {
-      const line = `${index + 1}. ${item.date} | ${item.type} | ${item.category} | ${formatMoney(item.amount)} | ${item.description}`;
-      pdf.text(line, 14, y);
-      y += 8;
-      if (y > 280) {
-        pdf.addPage();
-        y = 20;
-      }
-    });
-
-    if (filtered.length === 0) {
-      pdf.text("No hay movimientos para exportar.", 14, y);
-    }
-
-    pdf.save("reporte-financiero.pdf");
-    showToast("PDF exportado", "Tu reporte fue descargado correctamente.", "success");
+if (DOM.delete.cancelDeleteBtn) {
+  DOM.delete.cancelDeleteBtn.addEventListener("click", () => {
+    pendingDeleteId = null;
+    closeModal(DOM.modals.deleteModal);
   });
 }
 
+if (DOM.filters.toggleFiltersBtn) {
+  DOM.filters.toggleFiltersBtn.addEventListener("click", () => {
+    DOM.filters.historyFilters?.classList.toggle("show");
+  });
+}
+
+if (DOM.auth.registerBtn) DOM.auth.registerBtn.addEventListener("click", registerUser);
+if (DOM.auth.loginBtn) DOM.auth.loginBtn.addEventListener("click", loginUser);
+if (DOM.auth.googleLoginBtn) DOM.auth.googleLoginBtn.addEventListener("click", loginWithGoogle);
+if (DOM.auth.logoutBtn) DOM.auth.logoutBtn.addEventListener("click", logoutUser);
+
+if (DOM.auth.editProfileBtn) {
+  DOM.auth.editProfileBtn.addEventListener("click", () => {
+    if (DOM.profile.profileNameInput) {
+      DOM.profile.profileNameInput.value = userProfile.name || "";
+    }
+    if (DOM.profile.profileLimitInput) {
+      DOM.profile.profileLimitInput.value = userProfile.expenseLimit || "";
+    }
+    openModal(DOM.modals.profileModal);
+  });
+}
+
+if (DOM.profile.saveProfileBtn) {
+  DOM.profile.saveProfileBtn.addEventListener("click", saveProfile);
+}
+
+if (DOM.forms.limitForm) {
+  DOM.forms.limitForm.addEventListener("submit", saveExpenseLimit);
+}
+
+if (DOM.forms.expenseForm) {
+  DOM.forms.expenseForm.addEventListener("submit", createMovement);
+}
+
+if (DOM.forms.editMovementForm) {
+  DOM.forms.editMovementForm.addEventListener("submit", updateMovement);
+}
+
+if (DOM.delete.confirmDeleteBtn) {
+  DOM.delete.confirmDeleteBtn.addEventListener("click", confirmDeleteMovement);
+}
+
+if (DOM.filters.searchInput) DOM.filters.searchInput.addEventListener("input", update);
+if (DOM.filters.filterType) DOM.filters.filterType.addEventListener("change", update);
+if (DOM.filters.filterCategory) DOM.filters.filterCategory.addEventListener("change", update);
+if (DOM.filters.filterStartDate) DOM.filters.filterStartDate.addEventListener("change", update);
+if (DOM.filters.filterEndDate) DOM.filters.filterEndDate.addEventListener("change", update);
+if (DOM.filters.sortOrder) DOM.filters.sortOrder.addEventListener("change", update);
+
+if (DOM.filters.exportPdfBtn) {
+  DOM.filters.exportPdfBtn.addEventListener("click", exportPdf);
+}
+
+/* =========================
+   AUTH OBSERVER
+========================= */
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    if (authSection) authSection.classList.add("hidden");
-    if (appMain) {
-      appMain.classList.remove("hidden-app");
-      appMain.classList.add("visible-app");
+    hideElement(DOM.authSection);
+
+    if (DOM.appMain) {
+      DOM.appMain.classList.remove("hidden-app");
+      DOM.appMain.classList.add("visible-app");
     }
 
-    if (logoutBtn) logoutBtn.classList.remove("hidden");
-    if (editProfileBtn) editProfileBtn.classList.remove("hidden");
+    DOM.auth.logoutBtn?.classList.remove("hidden");
+    DOM.auth.editProfileBtn?.classList.remove("hidden");
 
     await loadUserProfile(user);
     await loadData();
     activateTab("dashboard");
   } else {
-    if (authSection) authSection.classList.remove("hidden");
-    if (appMain) {
-      appMain.classList.remove("visible-app");
-      appMain.classList.add("hidden-app");
+    showElement(DOM.authSection);
+
+    if (DOM.appMain) {
+      DOM.appMain.classList.remove("visible-app");
+      DOM.appMain.classList.add("hidden-app");
     }
 
-    if (logoutBtn) logoutBtn.classList.add("hidden");
-    if (editProfileBtn) editProfileBtn.classList.add("hidden");
-    setText(userInfo, "");
+    DOM.auth.logoutBtn?.classList.add("hidden");
+    DOM.auth.editProfileBtn?.classList.add("hidden");
+
+    setText(DOM.userInfo, "");
 
     expenses = [];
     userProfile = {
@@ -994,7 +1192,7 @@ onAuthStateChanged(auth, async (user) => {
   }
 
   setTimeout(() => {
-    if (loadingScreen) loadingScreen.classList.add("hidden");
+    hideElement(DOM.loadingScreen);
     refreshChartsAppearance();
   }, 500);
 });
