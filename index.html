@@ -33,7 +33,6 @@
     <div class="topbar-actions">
       <span id="userInfo" class="user-info"></span>
       <button id="themeToggleBtn" class="ghost-btn" title="Cambiar tema">🌙</button>
-      <button id="tutorialBtn" class="ghost-btn hidden">Tutorial</button>
       <button id="editProfileBtn" class="ghost-btn hidden">Perfil</button>
       <button id="logoutBtn" class="primary-btn hidden">Cerrar sesión</button>
     </div>
@@ -165,11 +164,6 @@
       </div>
 
       <div class="charts-grid">
-        <section class="panel chart-panel">
-          <h3>Distribución de gastos</h3>
-          <canvas id="categoryChart"></canvas>
-        </section>
-
         <section class="panel chart-panel">
           <h3>Saldo acumulado</h3>
           <canvas id="balanceChart"></canvas>
@@ -312,16 +306,22 @@
 
   <footer class="site-footer">
     <div class="footer-card">
-      <h3>Gracias por usar esta app</h3>
+      <h3>Gracias por usar Cuida Tus Finanzas 💚</h3>
+
       <p>
-        Esta aplicación fue creada por <strong>Diego Castillo P.</strong>.
-        Esperamos que sea de gran utilidad para un mejor control financiero.
+        Esta aplicación fue desarrollada con el objetivo de ayudarte a
+        entender mejor cómo manejas tu dinero y tomar decisiones más inteligentes.
       </p>
+
       <p>
-        Si deseas apoyar económicamente futuras mejoras:
-        <strong>946703630</strong>
+        Si este proyecto te ha sido útil y deseas apoyar futuras mejoras:
+        <strong>📱 946 703 630</strong>
       </p>
-      <small>Hecho por Diego Castillo P. • Gracias a todos por usar el app 💚</small>
+
+      <small>
+        Desarrollado por <strong>Diego Castillo P.</strong> •
+        Construyendo herramientas simples para decisiones inteligentes 🚀
+      </small>
     </div>
   </footer>
 
@@ -412,7 +412,7 @@
     </div>
   </div>
 
-  <button id="tutorialFloatingBtn" class="tutorial-floating-btn hidden" title="Ver tutorial otra vez">
+  <button id="tutorialFloatingBtn" class="tutorial-floating-btn hidden" title="Ver tutorial">
     ?
   </button>
 
@@ -441,8 +441,8 @@
           <div class="tutorial-icon">📊</div>
           <h4>Sección Resumen</h4>
           <p>
-            Aquí verás tu saldo disponible, total de gastos, total de ingresos,
-            gráficos y datos rápidos sobre tu situación financiera.
+            Aquí verás tu saldo disponible, total de gastos, total de ingresos
+            y un vistazo claro de tu situación financiera.
           </p>
         </div>
 
@@ -450,7 +450,7 @@
           <div class="tutorial-icon">➕</div>
           <h4>Sección Registrar</h4>
           <p>
-            En esta parte puedes agregar un movimiento nuevo indicando fecha,
+            Aquí puedes agregar un movimiento nuevo indicando fecha,
             categoría, descripción, monto, tipo de pago y si es ingreso o gasto.
           </p>
         </div>
