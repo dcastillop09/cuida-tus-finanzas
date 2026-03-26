@@ -58,8 +58,7 @@ const DOM = {
     googleLoginBtn: document.getElementById("googleLoginBtn"),
     logoutBtn: document.getElementById("logoutBtn"),
     editProfileBtn: document.getElementById("editProfileBtn"),
-    themeToggleBtn: document.getElementById("themeToggleBtn"),
-    tutorialBtn: document.getElementById("tutorialBtn")
+    themeToggleBtn: document.getElementById("themeToggleBtn")
   },
 
   forms: {
@@ -152,7 +151,6 @@ const DOM = {
   },
 
   charts: {
-    categoryCanvas: document.getElementById("categoryChart"),
     balanceCanvas: document.getElementById("balanceChart"),
     barCanvas: document.getElementById("barChart")
   },
@@ -166,10 +164,6 @@ const DOM = {
     steps: document.querySelectorAll(".tutorial-step")
   }
 };
-
-DOM.charts.categoryCtx = DOM.charts.categoryCanvas
-  ? DOM.charts.categoryCanvas.getContext("2d")
-  : null;
 
 DOM.charts.balanceCtx = DOM.charts.balanceCanvas
   ? DOM.charts.balanceCanvas.getContext("2d")
@@ -403,10 +397,6 @@ function applyTheme(theme) {
 function refreshChartsAppearance() {
   const color = getThemeTextColor();
 
-  if (categoryChart) {
-    categoryChart.options.plugins.legend.labels.color = color;
-  }
-
   if (balanceChart) {
     balanceChart.options.plugins.legend.labels.color = color;
     balanceChart.options.scales.x.ticks.color = color;
@@ -419,7 +409,6 @@ function refreshChartsAppearance() {
   }
 
   setTimeout(() => {
-    safeResizeUpdateChart(categoryChart);
     safeResizeUpdateChart(balanceChart);
     safeResizeUpdateChart(barChart);
   }, 100);
@@ -430,31 +419,6 @@ applyTheme(localStorage.getItem("theme") || "dark");
 /* =========================
    CHARTS
 ========================= */
-let categoryChart = DOM.charts.categoryCtx
-  ? new Chart(DOM.charts.categoryCtx, {
-      type: "doughnut",
-      data: {
-        labels: [],
-        datasets: [
-          {
-            data: [],
-            backgroundColor: []
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: "bottom",
-            labels: { color: getThemeTextColor() }
-          }
-        }
-      }
-    })
-  : null;
-
 let balanceChart = DOM.charts.balanceCtx
   ? new Chart(DOM.charts.balanceCtx, {
       type: "line",
@@ -497,7 +461,8 @@ let barChart = DOM.charts.barCtx
           {
             label: "Gastos",
             data: [],
-            borderRadius: 8
+            borderRadius: 8,
+            backgroundColor: []
           }
         ]
       },
@@ -545,7 +510,6 @@ function activateTab(tabId) {
   document.getElementById(tabId)?.classList.add("active");
 
   setTimeout(() => {
-    safeResizeUpdateChart(categoryChart);
     safeResizeUpdateChart(balanceChart);
     safeResizeUpdateChart(barChart);
   }, 150);
@@ -977,11 +941,11 @@ function updateSummary(totalIncome, totalExpenses, categoryTotals) {
   setText(DOM.summary.totalExpenses, formatMoney(totalExpenses));
   setText(DOM.summary.totalIncome, formatMoney(totalIncome));
 
-  const highest = Object.values(categoryTotals).length
-    ? Math.max(...Object.values(categoryTotals))
-    : 0;
+  const highestSingleExpense = expenses
+    .filter((item) => item.type === "Gasto")
+    .reduce((max, item) => Math.max(max, Number(item.amount)), 0);
 
-  setText(DOM.summary.highestExpense, formatMoney(highest));
+  setText(DOM.summary.highestExpense, formatMoney(highestSingleExpense));
 
   const topCategoryEntry = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0];
   setText(DOM.summary.topCategory, topCategoryEntry ? topCategoryEntry[0] : "-");
@@ -996,14 +960,7 @@ function updateSummary(totalIncome, totalExpenses, categoryTotals) {
 
 function updateCharts(categoryTotals, balanceTimeline) {
   const labels = Object.keys(categoryTotals);
-
-  if (categoryChart) {
-    categoryChart.data.labels = labels;
-    categoryChart.data.datasets[0].data = Object.values(categoryTotals);
-    categoryChart.data.datasets[0].backgroundColor = labels.map(
-      (label) => categoryColors[label] || "#ccc"
-    );
-  }
+  const values = Object.values(categoryTotals);
 
   if (balanceChart) {
     balanceChart.data.labels = balanceTimeline.map((item) => item.date);
@@ -1012,7 +969,7 @@ function updateCharts(categoryTotals, balanceTimeline) {
 
   if (barChart) {
     barChart.data.labels = labels;
-    barChart.data.datasets[0].data = Object.values(categoryTotals);
+    barChart.data.datasets[0].data = values;
     barChart.data.datasets[0].backgroundColor = labels.map(
       (label) => categoryColors[label] || "#999"
     );
@@ -1068,7 +1025,6 @@ function update() {
   bindActionButtons();
 
   setTimeout(() => {
-    safeResizeUpdateChart(categoryChart);
     safeResizeUpdateChart(balanceChart);
     safeResizeUpdateChart(barChart);
   }, 100);
@@ -1090,6 +1046,7 @@ function updateLimitUI(totalExpensesParam = null) {
     setText(DOM.limit.expenseLimitLabel, "No configurado");
     setWidth(DOM.limit.limitProgress, "0%");
     setText(DOM.limit.limitProgressText, "Configura un límite para monitorear tus gastos.");
+    DOM.limit.limitProgress?.classList.remove("progress-safe", "progress-warning", "progress-danger");
     return;
   }
 
@@ -1097,6 +1054,17 @@ function updateLimitUI(totalExpensesParam = null) {
 
   setText(DOM.limit.expenseLimitLabel, formatMoney(limit));
   setWidth(DOM.limit.limitProgress, `${progress}%`);
+
+  DOM.limit.limitProgress?.classList.remove("progress-safe", "progress-warning", "progress-danger");
+
+  if (progress < 70) {
+    DOM.limit.limitProgress?.classList.add("progress-safe");
+  } else if (progress < 90) {
+    DOM.limit.limitProgress?.classList.add("progress-warning");
+  } else {
+    DOM.limit.limitProgress?.classList.add("progress-danger");
+  }
+
   setText(
     DOM.limit.limitProgressText,
     `Has gastado ${formatMoney(totalExpenses)} de ${formatMoney(limit)} (${progress.toFixed(1)}%).`
@@ -1281,10 +1249,6 @@ if (DOM.auth.editProfileBtn) {
   });
 }
 
-if (DOM.auth.tutorialBtn) {
-  DOM.auth.tutorialBtn.addEventListener("click", () => openTutorial(1));
-}
-
 if (DOM.tutorial.floatingBtn) {
   DOM.tutorial.floatingBtn.addEventListener("click", () => openTutorial(1));
 }
@@ -1346,7 +1310,6 @@ onAuthStateChanged(auth, async (user) => {
 
     DOM.auth.logoutBtn?.classList.remove("hidden");
     DOM.auth.editProfileBtn?.classList.remove("hidden");
-    DOM.auth.tutorialBtn?.classList.remove("hidden");
     DOM.tutorial.floatingBtn?.classList.remove("hidden");
 
     await loadUserProfile(user);
@@ -1363,7 +1326,6 @@ onAuthStateChanged(auth, async (user) => {
 
     DOM.auth.logoutBtn?.classList.add("hidden");
     DOM.auth.editProfileBtn?.classList.add("hidden");
-    DOM.auth.tutorialBtn?.classList.add("hidden");
     DOM.tutorial.floatingBtn?.classList.add("hidden");
 
     closeModal(DOM.modals.tutorialModal);
