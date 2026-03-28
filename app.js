@@ -40,16 +40,6 @@ window.addEventListener("beforeinstallprompt", (e) => {
   }
 });
 
-window.addEventListener("appinstalled", () => {
-  console.log("App instalada correctamente");
-
-  const installBtn = document.getElementById("installBtn");
-  if (installBtn) {
-    installBtn.classList.add("hidden");
-  }
-
-  deferredPrompt = null;
-});
 const totalTutorialSteps = 6;
 
 let userProfile = {
