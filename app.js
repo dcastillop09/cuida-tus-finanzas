@@ -23,6 +23,32 @@ import {
 let expenses = [];
 let pendingDeleteId = null;
 let currentTutorialStep = 1;
+
+/* =========================
+   PWA INSTALL
+========================= */
+let deferredPrompt = null;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+
+  const installBtn = document.getElementById("installBtn");
+  if (installBtn) {
+    installBtn.classList.remove("hidden");
+  }
+});
+
+window.addEventListener("appinstalled", () => {
+  console.log("App instalada correctamente");
+
+  const installBtn = document.getElementById("installBtn");
+  if (installBtn) {
+    installBtn.classList.add("hidden");
+  }
+
+  deferredPrompt = null;
+});
 const totalTutorialSteps = 6;
 
 let userProfile = {
@@ -228,6 +254,26 @@ function showToast(title, message, type = "info") {
 
 function getCurrentUser() {
   return auth.currentUser;
+}
+
+function installApp() {
+  if (!deferredPrompt) return;
+
+  deferredPrompt.prompt();
+
+  deferredPrompt.userChoice.then((choiceResult) => {
+    if (choiceResult.outcome === "accepted") {
+      console.log("Usuario instaló la app");
+    } else {
+      console.log("Usuario canceló la instalación");
+    }
+    deferredPrompt = null;
+
+    const installBtn = document.getElementById("installBtn");
+    if (installBtn) {
+      installBtn.classList.add("hidden");
+    }
+  });
 }
 
 function getAuthFormValues() {
@@ -1253,6 +1299,12 @@ if (DOM.tutorial.floatingBtn) {
   DOM.tutorial.floatingBtn.addEventListener("click", () => openTutorial(1));
 }
 
+const installBtn = document.getElementById("installBtn");
+
+if (installBtn) {
+  installBtn.addEventListener("click", installApp);
+}
+
 if (DOM.tutorial.prevBtn) {
   DOM.tutorial.prevBtn.addEventListener("click", prevTutorialStep);
 }
@@ -1342,77 +1394,4 @@ onAuthStateChanged(auth, async (user) => {
     hideElement(DOM.loadingScreen);
     refreshChartsAppearance();
   }, 500);
-});
-
-/* =========================
-   INSTALAR APP (PWA)
-========================= */
-
-let deferredPrompt;
-let installBtn = null;
-
-// Crear botón dinámicamente
-function createInstallButton() {
-  if (installBtn) return;
-
-  installBtn = document.createElement("button");
-  installBtn.textContent = "Instalar app 📲";
-  installBtn.style.position = "fixed";
-  installBtn.style.bottom = "20px";
-  installBtn.style.left = "20px";
-  installBtn.style.padding = "12px 16px";
-  installBtn.style.borderRadius = "12px";
-  installBtn.style.border = "none";
-  installBtn.style.background = "#1dd1a1";
-  installBtn.style.color = "#06261c";
-  installBtn.style.fontWeight = "bold";
-  installBtn.style.cursor = "pointer";
-  installBtn.style.zIndex = "9999";
-  installBtn.style.boxShadow = "0 10px 20px rgba(0,0,0,0.3)";
-
-  document.body.appendChild(installBtn);
-
-  installBtn.addEventListener("click", installApp);
-}
-
-// Capturar evento de instalación
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  deferredPrompt = e;
-
-  console.log("Evento install capturado");
-
-  createInstallButton();
-});
-
-// Función para instalar
-async function installApp() {
-  if (!deferredPrompt) return;
-
-  deferredPrompt.prompt();
-
-  const choiceResult = await deferredPrompt.userChoice;
-
-  if (choiceResult.outcome === "accepted") {
-    console.log("Usuario instaló la app");
-  } else {
-    console.log("Usuario canceló la instalación");
-  }
-
-  deferredPrompt = null;
-
-  if (installBtn) {
-    installBtn.remove();
-    installBtn = null;
-  }
-}
-
-// Detectar si ya está instalada
-window.addEventListener("appinstalled", () => {
-  console.log("App instalada correctamente");
-
-  if (installBtn) {
-    installBtn.remove();
-    installBtn = null;
-  }
 });
