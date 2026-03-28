@@ -30,6 +30,7 @@ let currentTutorialStep = 1;
 let deferredPrompt = null;
 
 window.addEventListener("beforeinstallprompt", (e) => {
+  console.log("beforeinstallprompt detectado");
   e.preventDefault();
   deferredPrompt = e;
 
