@@ -34,9 +34,11 @@ window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredPrompt = e;
 
+document.addEventListener("DOMContentLoaded", () => {
   const installBtn = document.getElementById("installBtn");
+
   if (installBtn) {
-    installBtn.classList.remove("hidden");
+    installBtn.addEventListener("click", installApp);
   }
 });
 
