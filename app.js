@@ -23,6 +23,7 @@ import {
 let expenses = [];
 let pendingDeleteId = null;
 let currentTutorialStep = 1;
+const totalTutorialSteps = 6;
 
 /* =========================
    PWA INSTALL
@@ -34,15 +35,22 @@ window.addEventListener("beforeinstallprompt", (e) => {
   e.preventDefault();
   deferredPrompt = e;
 
-document.addEventListener("DOMContentLoaded", () => {
   const installBtn = document.getElementById("installBtn");
-
   if (installBtn) {
-    installBtn.addEventListener("click", installApp);
+    installBtn.classList.remove("hidden");
   }
 });
 
-const totalTutorialSteps = 6;
+window.addEventListener("appinstalled", () => {
+  console.log("App instalada correctamente");
+
+  const installBtn = document.getElementById("installBtn");
+  if (installBtn) {
+    installBtn.classList.add("hidden");
+  }
+
+  deferredPrompt = null;
+});
 
 let userProfile = {
   name: "",
@@ -77,7 +85,8 @@ const DOM = {
     googleLoginBtn: document.getElementById("googleLoginBtn"),
     logoutBtn: document.getElementById("logoutBtn"),
     editProfileBtn: document.getElementById("editProfileBtn"),
-    themeToggleBtn: document.getElementById("themeToggleBtn")
+    themeToggleBtn: document.getElementById("themeToggleBtn"),
+    installBtn: document.getElementById("installBtn")
   },
 
   forms: {
@@ -249,26 +258,6 @@ function getCurrentUser() {
   return auth.currentUser;
 }
 
-function installApp() {
-  if (!deferredPrompt) return;
-
-  deferredPrompt.prompt();
-
-  deferredPrompt.userChoice.then((choiceResult) => {
-    if (choiceResult.outcome === "accepted") {
-      console.log("Usuario instaló la app");
-    } else {
-      console.log("Usuario canceló la instalación");
-    }
-    deferredPrompt = null;
-
-    const installBtn = document.getElementById("installBtn");
-    if (installBtn) {
-      installBtn.classList.add("hidden");
-    }
-  });
-}
-
 function getAuthFormValues() {
   return {
     email: DOM.auth.email?.value.trim() || "",
@@ -335,6 +324,29 @@ function getThemeTextColor() {
   return getComputedStyle(document.documentElement)
     .getPropertyValue("--text")
     .trim() || "#fff";
+}
+
+function installApp() {
+  if (!deferredPrompt) {
+    alert("Usa el menú del navegador para instalar la app.");
+    return;
+  }
+
+  deferredPrompt.prompt();
+
+  deferredPrompt.userChoice.then((choiceResult) => {
+    if (choiceResult.outcome === "accepted") {
+      console.log("Usuario instaló la app");
+    } else {
+      console.log("Usuario canceló la instalación");
+    }
+
+    deferredPrompt = null;
+
+    if (DOM.auth.installBtn) {
+      DOM.auth.installBtn.classList.add("hidden");
+    }
+  });
 }
 
 /* =========================
@@ -1276,6 +1288,10 @@ if (DOM.auth.loginBtn) DOM.auth.loginBtn.addEventListener("click", loginUser);
 if (DOM.auth.googleLoginBtn) DOM.auth.googleLoginBtn.addEventListener("click", loginWithGoogle);
 if (DOM.auth.logoutBtn) DOM.auth.logoutBtn.addEventListener("click", logoutUser);
 
+if (DOM.auth.installBtn) {
+  DOM.auth.installBtn.addEventListener("click", installApp);
+}
+
 if (DOM.auth.editProfileBtn) {
   DOM.auth.editProfileBtn.addEventListener("click", () => {
     if (DOM.profile.profileNameInput) {
@@ -1290,12 +1306,6 @@ if (DOM.auth.editProfileBtn) {
 
 if (DOM.tutorial.floatingBtn) {
   DOM.tutorial.floatingBtn.addEventListener("click", () => openTutorial(1));
-}
-
-const installBtn = document.getElementById("installBtn");
-
-if (installBtn) {
-  installBtn.addEventListener("click", installApp);
 }
 
 if (DOM.tutorial.prevBtn) {
@@ -1372,6 +1382,10 @@ onAuthStateChanged(auth, async (user) => {
     DOM.auth.logoutBtn?.classList.add("hidden");
     DOM.auth.editProfileBtn?.classList.add("hidden");
     DOM.tutorial.floatingBtn?.classList.add("hidden");
+
+    if (DOM.auth.installBtn) {
+      DOM.auth.installBtn.classList.add("hidden");
+    }
 
     closeModal(DOM.modals.tutorialModal);
     setText(DOM.userInfo, "");
