@@ -9,6 +9,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1dd1a1">
+  <link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
   <div id="toastContainer" class="toast-container"></div>
@@ -493,5 +497,19 @@
   </div>
 
   <script type="module" src="app.js"></script>
+
+  <script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("/service-worker.js")
+        .then((registration) => {
+          console.log("Service Worker registrado:", registration.scope);
+        })
+        .catch((error) => {
+          console.log("Error al registrar Service Worker:", error);
+        });
+    });
+  }
+</script>
 </body>
 </html>
